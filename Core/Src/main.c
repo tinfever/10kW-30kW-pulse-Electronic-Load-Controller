@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lcd/stm32_adafruit_lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,11 +66,20 @@ static void MX_SPI2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
+void mainApp(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+//Allows printf to print to SWO
+int __io_putchar(int ch)
+{
+ // Write character to ITM ch.0
+ ITM_SendChar(ch);
+ return(ch);
+}
 
 /* USER CODE END 0 */
 
@@ -110,7 +119,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
-
+  mainApp();
   /* USER CODE END 2 */
 
   /* Infinite loop */
