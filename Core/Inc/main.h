@@ -37,6 +37,11 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+//extern TIM_HandleTypeDef htim4;
+//extern ADC_HandleTypeDef hadc1;
+//extern ADC_HandleTypeDef hadc2;
+//extern TIM_HandleTypeDef htim8;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -75,6 +80,13 @@ void Error_Handler(void);
 #define FAN_PWM_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+
+//#define ADC_ISENSE ADC_CHANNEL_0
+//#define ADC_VSENSE ADC_CHANNEL_1
+//#define ADC_IMUX_0B ADC_CHANNEL_12
+//#define ADC_IMUX_0A ADC_CHANNEL_13
+//#define ADC_TC_MUX ADC_CHANNEL_10
+//#define ADC_THERM_MUX ADC_CHANNEL_11
 
 /* USER CODE END Private defines */
 

@@ -21,7 +21,16 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "lcd/stm32_adafruit_lcd.h"
+
+#include <stdio.h>
+#include <stdbool.h>
+
+#include "state.h"
+#include "display.h"
+#include "adc.h"
+#include "load.h"
+#include "temp.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,7 +75,6 @@ static void MX_SPI2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
-void mainApp(void);
 
 /* USER CODE END PFP */
 
@@ -79,6 +87,37 @@ int __io_putchar(int ch)
  // Write character to ITM ch.0
  ITM_SendChar(ch);
  return(ch);
+}
+
+void IO1_blink(void){
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(IO1_GPIO_Port, IO1_Pin);
+}
+
+void IO2_blink(void){
+	HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+	HAL_GPIO_TogglePin(IO2_GPIO_Port, IO2_Pin);
+}
+
+typedef struct {
+	bool enabled;
+	uint32_t period_ms;
+	uint32_t last_run_time;
+	void (*RunTask)(void);
+} Task;
+
+void TaskScheduler(Task *task_list, uint32_t number_of_tasks){
+	for (int i = 0; i < number_of_tasks; i++){
+		uint32_t current_time = HAL_GetTick();
+		if (task_list[i].enabled == true
+			&& (current_time - task_list[i].last_run_time) >= task_list[i].period_ms
+			&& task_list[i].RunTask != 0	//make sure task function pointer isn't null
+			&& task_list[i].period_ms != 0	//and period isn't null either
+		){
+			task_list[i].last_run_time = current_time;
+			task_list[i].RunTask();
+		}
+	}
 }
 
 /* USER CODE END 0 */
@@ -119,7 +158,54 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
-  mainApp();
+
+//  HAL_ADCEx_Calibration_Start(&hadc1);
+//  HAL_ADCEx_Calibration_Start(&hadc2);
+//  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+//
+//  SetupInjectedDualADCReadForIRQ();
+//
+//  LoadStageInit();
+
+  //start PWM fan control
+  //default fan speed is 30%
+//  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+
+  //start debug cycle counter
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+//  //Stop TIM3 during break while debugging
+//  DBGMCU->CR |= DBGMCU_CR_DBG_TIM3_STOP;
+
+
+#define NUM_TASKS 10
+const uint32_t number_of_tasks = NUM_TASKS;
+Task task_list[NUM_TASKS] = {0};
+
+//task_list[0].RunTask = IO1_blink;
+//task_list[0].period_ms = 500;
+//task_list[0].enabled = true;
+
+DisplayInit();
+task_list[1].RunTask = DisplayUpdate;
+task_list[1].period_ms = 50;
+task_list[1].enabled = true;
+
+
+//task_list[2].RunTask = LoadControl;
+//task_list[2].period_ms = 50;
+//task_list[2].enabled = true;
+//
+//task_list[3].RunTask = UpdateLoadStageTemps;
+//task_list[3].period_ms = 500;
+//task_list[3].enabled = true;
+//
+//task_list[4].RunTask = FanSpeedControl;
+//task_list[4].period_ms = 500;
+//task_list[4].enabled = true;
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -129,12 +215,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
-	  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 1);
-	  HAL_Delay(1000);
-	  HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
-	  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
-	  HAL_Delay(1000);
+	  TaskScheduler(task_list, number_of_tasks);
 
   }
   /* USER CODE END 3 */
