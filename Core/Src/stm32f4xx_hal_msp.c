@@ -113,23 +113,22 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PA6     ------> ADC1_IN6
     PA7     ------> ADC1_IN7
     PC4     ------> ADC1_IN14
-    PC5     ------> ADC1_IN15
     PB0     ------> ADC1_IN8
     PB1     ------> ADC1_IN9
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5;
+    GPIO_InitStruct.Pin = IMUX_OUT15_Pin|IMUX_OUT9_Pin|IMUX_OUT8_Pin|IMUX_OUT6_Pin
+                          |IMUX_OUT5_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+    GPIO_InitStruct.Pin = REMOTE_VSENSE_Pin|I_SUM_Pin|IMUX_OUT7_Pin|IMUX_OUT4_Pin
+                          |TC_MUX_Pin|THERMISTOR_MUX_Pin|IMUX_OUT1_Pin|IMUX_OUT0_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+    GPIO_InitStruct.Pin = IMUX_OUT2_Pin|IMUX_OUT3_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -163,23 +162,22 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PA6     ------> ADC2_IN6
     PA7     ------> ADC2_IN7
     PC4     ------> ADC2_IN14
-    PC5     ------> ADC2_IN15
     PB0     ------> ADC2_IN8
     PB1     ------> ADC2_IN9
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5;
+    GPIO_InitStruct.Pin = IMUX_OUT15_Pin|IMUX_OUT9_Pin|IMUX_OUT8_Pin|IMUX_OUT6_Pin
+                          |IMUX_OUT5_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+    GPIO_InitStruct.Pin = REMOTE_VSENSE_Pin|I_SUM_Pin|IMUX_OUT7_Pin|IMUX_OUT4_Pin
+                          |TC_MUX_Pin|THERMISTOR_MUX_Pin|IMUX_OUT1_Pin|IMUX_OUT0_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+    GPIO_InitStruct.Pin = IMUX_OUT2_Pin|IMUX_OUT3_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -205,9 +203,6 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PF5     ------> ADC3_IN15
     PF6     ------> ADC3_IN4
     PF7     ------> ADC3_IN5
-    PF8     ------> ADC3_IN6
-    PF9     ------> ADC3_IN7
-    PF10     ------> ADC3_IN8
     PC0     ------> ADC3_IN10
     PC1     ------> ADC3_IN11
     PC2     ------> ADC3_IN12
@@ -217,18 +212,18 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PA2     ------> ADC3_IN2
     PA3     ------> ADC3_IN3
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
+    GPIO_InitStruct.Pin = IMUX_OUT11_Pin|IMUX_OUT10_Pin|IMUX_OUT12_Pin|IMUX_OUT13_Pin
+                          |IMUX_OUT14_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+    GPIO_InitStruct.Pin = IMUX_OUT15_Pin|IMUX_OUT9_Pin|IMUX_OUT8_Pin|IMUX_OUT6_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+    GPIO_InitStruct.Pin = REMOTE_VSENSE_Pin|I_SUM_Pin|IMUX_OUT7_Pin|IMUX_OUT4_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -270,17 +265,16 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PA6     ------> ADC1_IN6
     PA7     ------> ADC1_IN7
     PC4     ------> ADC1_IN14
-    PC5     ------> ADC1_IN15
     PB0     ------> ADC1_IN8
     PB1     ------> ADC1_IN9
     */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5);
+    HAL_GPIO_DeInit(GPIOC, IMUX_OUT15_Pin|IMUX_OUT9_Pin|IMUX_OUT8_Pin|IMUX_OUT6_Pin
+                          |IMUX_OUT5_Pin);
 
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOA, REMOTE_VSENSE_Pin|I_SUM_Pin|IMUX_OUT7_Pin|IMUX_OUT4_Pin
+                          |TC_MUX_Pin|THERMISTOR_MUX_Pin|IMUX_OUT1_Pin|IMUX_OUT0_Pin);
 
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_0|GPIO_PIN_1);
+    HAL_GPIO_DeInit(GPIOB, IMUX_OUT2_Pin|IMUX_OUT3_Pin);
 
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
 
@@ -308,17 +302,16 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PA6     ------> ADC2_IN6
     PA7     ------> ADC2_IN7
     PC4     ------> ADC2_IN14
-    PC5     ------> ADC2_IN15
     PB0     ------> ADC2_IN8
     PB1     ------> ADC2_IN9
     */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5);
+    HAL_GPIO_DeInit(GPIOC, IMUX_OUT15_Pin|IMUX_OUT9_Pin|IMUX_OUT8_Pin|IMUX_OUT6_Pin
+                          |IMUX_OUT5_Pin);
 
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOA, REMOTE_VSENSE_Pin|I_SUM_Pin|IMUX_OUT7_Pin|IMUX_OUT4_Pin
+                          |TC_MUX_Pin|THERMISTOR_MUX_Pin|IMUX_OUT1_Pin|IMUX_OUT0_Pin);
 
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_0|GPIO_PIN_1);
+    HAL_GPIO_DeInit(GPIOB, IMUX_OUT2_Pin|IMUX_OUT3_Pin);
 
   /* USER CODE BEGIN ADC2_MspDeInit 1 */
 
@@ -338,9 +331,6 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PF5     ------> ADC3_IN15
     PF6     ------> ADC3_IN4
     PF7     ------> ADC3_IN5
-    PF8     ------> ADC3_IN6
-    PF9     ------> ADC3_IN7
-    PF10     ------> ADC3_IN8
     PC0     ------> ADC3_IN10
     PC1     ------> ADC3_IN11
     PC2     ------> ADC3_IN12
@@ -350,12 +340,12 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PA2     ------> ADC3_IN2
     PA3     ------> ADC3_IN3
     */
-    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10);
+    HAL_GPIO_DeInit(GPIOF, IMUX_OUT11_Pin|IMUX_OUT10_Pin|IMUX_OUT12_Pin|IMUX_OUT13_Pin
+                          |IMUX_OUT14_Pin);
 
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    HAL_GPIO_DeInit(GPIOC, IMUX_OUT15_Pin|IMUX_OUT9_Pin|IMUX_OUT8_Pin|IMUX_OUT6_Pin);
 
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    HAL_GPIO_DeInit(GPIOA, REMOTE_VSENSE_Pin|I_SUM_Pin|IMUX_OUT7_Pin|IMUX_OUT4_Pin);
 
   /* USER CODE BEGIN ADC3_MspDeInit 1 */
 
@@ -388,7 +378,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     PB14     ------> SPI2_MISO
     PB15     ------> SPI2_MOSI
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15;
+    GPIO_InitStruct.Pin = TFT_SCLK_Pin|TFT_CS_Pin|SD_MISO_Pin|TFT_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -424,7 +414,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     PB14     ------> SPI2_MISO
     PB15     ------> SPI2_MOSI
     */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_15);
+    HAL_GPIO_DeInit(GPIOB, TFT_SCLK_Pin|TFT_CS_Pin|SD_MISO_Pin|TFT_MOSI_Pin);
 
   /* USER CODE BEGIN SPI2_MspDeInit 1 */
 

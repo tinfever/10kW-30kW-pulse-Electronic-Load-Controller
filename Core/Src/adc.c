@@ -24,18 +24,18 @@ uint32_t ConvertStageCurrentADCtomA(uint32_t adc_count, uint32_t shunt_uOhms){
 	return result_mA;
 }
 
-void SetupInjectedDualADCReadForIRQ(void){
-	ADC1->CR1 |= 1 << ADC_CR1_DUALMOD_Pos;	// Combined regular simultaneous + injected simultaneous mode
-
-	ADC1->CR2 |= 7 << ADC_CR2_JEXTSEL_Pos;	//JSWSTART for injection trigger
-	ADC1->CR2 |= ADC_CR2_JEXTTRIG;	//Enable JSWSTART
-
-	ADC2->CR2 |= 7 << ADC_CR2_JEXTSEL_Pos;	//JSWSTART for injection trigger
-	ADC2->CR2 |= ADC_CR2_JEXTTRIG;
-
-	ADC1->JSQR |= ADC_ISENSE << ADC_JSQR_JSQ4_Pos;
-	ADC2->JSQR |= ADC_VSENSE << ADC_JSQR_JSQ4_Pos;
-}
+//void SetupInjectedDualADCReadForIRQ(void){
+//	ADC1->CR1 |= 1 << ADC_CR1_DUALMOD_Pos;	// Combined regular simultaneous + injected simultaneous mode
+//
+//	ADC1->CR2 |= 7 << ADC_CR2_JEXTSEL_Pos;	//JSWSTART for injection trigger
+//	ADC1->CR2 |= ADC_CR2_JEXTTRIG;	//Enable JSWSTART
+//
+//	ADC2->CR2 |= 7 << ADC_CR2_JEXTSEL_Pos;	//JSWSTART for injection trigger
+//	ADC2->CR2 |= ADC_CR2_JEXTTRIG;
+//
+//	ADC1->JSQR |= ADC_ISENSE << ADC_JSQR_JSQ4_Pos;
+//	ADC2->JSQR |= ADC_VSENSE << ADC_JSQR_JSQ4_Pos;
+//}
 
 //measure Vsense and isense simultaneously and then store in state buffers
 void MeasureSystemVoltageCurrent(void){

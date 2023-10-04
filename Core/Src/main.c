@@ -99,6 +99,25 @@ void IO2_blink(void){
 	HAL_GPIO_TogglePin(IO2_GPIO_Port, IO2_Pin);
 }
 
+void Stage_Sequence_Test(void){
+
+	for (int i = 0; i < NUM_STAGES; i++){
+		const LoadStageConfiguration* stage = GetPointerToSingleStageConfig(i);
+		HAL_GPIO_WritePin(stage->io_port, stage->io_pin, 1);
+		HAL_Delay(100);
+	}
+
+	HAL_Delay(5000);
+
+	for (int i = 0; i < NUM_STAGES; i++){
+		const LoadStageConfiguration* stage = GetPointerToSingleStageConfig(i);
+		HAL_GPIO_WritePin(stage->io_port, stage->io_pin, 0);
+		HAL_Delay(100);
+	}
+
+	HAL_Delay(5000);
+}
+
 typedef struct {
 	bool enabled;
 	uint32_t period_ms;
@@ -161,7 +180,7 @@ int main(void)
 
 //  HAL_ADCEx_Calibration_Start(&hadc1);
 //  HAL_ADCEx_Calibration_Start(&hadc2);
-//  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&ROTARY_ENCODER_TIM, TIM_CHANNEL_ALL);
 //
 //  SetupInjectedDualADCReadForIRQ();
 //
@@ -205,6 +224,9 @@ task_list[1].enabled = true;
 //task_list[4].period_ms = 500;
 //task_list[4].enabled = true;
 
+task_list[5].RunTask = IO1_blink;
+task_list[5].period_ms = 500;
+task_list[5].enabled = true;
 
   /* USER CODE END 2 */
 
@@ -602,21 +624,153 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOI_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOJ_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOK_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, IO1_Pin|IO2_Pin|LED1_Pin|LED2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, FET_EN42_Pin|FET_EN41_Pin|FET_EN40_Pin|FET_EN39_Pin
+                          |FET_EN38_Pin|FET_EN4_Pin|FET_EN3_Pin|FET_EN2_Pin
+                          |FET_EN1_Pin|FET_EN0_Pin|FET_EN15_Pin|FET_EN14_Pin
+                          |FET_EN13_Pin|FET_EN12_Pin|FET_EN48_Pin|FET_EN47_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : IO1_Pin IO2_Pin LED1_Pin LED2_Pin */
-  GPIO_InitStruct.Pin = IO1_Pin|IO2_Pin|LED1_Pin|LED2_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOI, FET_EN37_Pin|FET_EN36_Pin|FET_EN35_Pin|FET_EN34_Pin
+                          |FET_EN33_Pin|FET_EN32_Pin|FET_EN7_Pin|FET_EN28_Pin
+                          |FET_EN27_Pin|FET_EN26_Pin|FET_EN25_Pin|FET_EN46_Pin
+                          |FET_EN45_Pin|FET_EN44_Pin|FET_EN43_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOJ, TMUX_INH0_Pin|TMUX_INH1_Pin|TMUX_INH2_Pin|TMUX_INH3_Pin
+                          |TMUX_INH4_Pin|TMUX_INH5_Pin|TMUX_INH6_Pin|TMUX_INH7_Pin
+                          |TMUX_INH8_Pin|TMUX_INH9_Pin|TMUX_INH10_Pin|TMUX_INH11_Pin
+                          |TMUX_INH12_Pin|TMUX_INH13_Pin|TMUX_INH14_Pin|TMUX_INH15_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOG, FET_EN6_Pin|FET_EN5_Pin|FET_EN19_Pin|FET_EN18_Pin
+                          |FET_EN17_Pin|FET_EN16_Pin|FET_EN31_Pin|FET_EN30_Pin
+                          |FET_EN29_Pin|FET_EN56_Pin|FET_EN55_Pin|FET_EN54_Pin
+                          |FET_EN53_Pin|FET_EN52_Pin|FET_EN51_Pin|FET_EN49_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, IO1_Pin|IO2_Pin|TFT_RESET_Pin|TFT_DC_Pin
+                          |SD_CS_Pin|LED1_Pin|LED2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOH, TMUX_S0_Pin|TMUX_S1_Pin|IMUX_S0_Pin|IMUX_S1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, FET_EN11_Pin|FET_EN10_Pin|FET_EN9_Pin|FET_EN8_Pin
+                          |FET_EN23_Pin|FET_EN22_Pin|FET_EN21_Pin|FET_EN20_Pin
+                          |FET_EN24_Pin|FET_EN63_Pin|FET_EN62_Pin|FET_EN61_Pin
+                          |FET_EN60_Pin|FET_EN59_Pin|FET_EN58_Pin|FET_EN57_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(FET_EN50_GPIO_Port, FET_EN50_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : FET_EN42_Pin FET_EN41_Pin FET_EN40_Pin FET_EN39_Pin
+                           FET_EN38_Pin FET_EN4_Pin FET_EN3_Pin FET_EN2_Pin
+                           FET_EN1_Pin FET_EN0_Pin FET_EN15_Pin FET_EN14_Pin
+                           FET_EN13_Pin FET_EN12_Pin FET_EN48_Pin FET_EN47_Pin */
+  GPIO_InitStruct.Pin = FET_EN42_Pin|FET_EN41_Pin|FET_EN40_Pin|FET_EN39_Pin
+                          |FET_EN38_Pin|FET_EN4_Pin|FET_EN3_Pin|FET_EN2_Pin
+                          |FET_EN1_Pin|FET_EN0_Pin|FET_EN15_Pin|FET_EN14_Pin
+                          |FET_EN13_Pin|FET_EN12_Pin|FET_EN48_Pin|FET_EN47_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FET_EN37_Pin FET_EN36_Pin FET_EN35_Pin FET_EN34_Pin
+                           FET_EN33_Pin FET_EN32_Pin FET_EN7_Pin FET_EN28_Pin
+                           FET_EN27_Pin FET_EN26_Pin FET_EN25_Pin FET_EN46_Pin
+                           FET_EN45_Pin FET_EN44_Pin FET_EN43_Pin */
+  GPIO_InitStruct.Pin = FET_EN37_Pin|FET_EN36_Pin|FET_EN35_Pin|FET_EN34_Pin
+                          |FET_EN33_Pin|FET_EN32_Pin|FET_EN7_Pin|FET_EN28_Pin
+                          |FET_EN27_Pin|FET_EN26_Pin|FET_EN25_Pin|FET_EN46_Pin
+                          |FET_EN45_Pin|FET_EN44_Pin|FET_EN43_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : TMUX_INH0_Pin TMUX_INH1_Pin TMUX_INH2_Pin TMUX_INH3_Pin
+                           TMUX_INH4_Pin TMUX_INH5_Pin TMUX_INH6_Pin TMUX_INH7_Pin
+                           TMUX_INH8_Pin TMUX_INH9_Pin TMUX_INH10_Pin TMUX_INH11_Pin
+                           TMUX_INH12_Pin TMUX_INH13_Pin TMUX_INH14_Pin TMUX_INH15_Pin */
+  GPIO_InitStruct.Pin = TMUX_INH0_Pin|TMUX_INH1_Pin|TMUX_INH2_Pin|TMUX_INH3_Pin
+                          |TMUX_INH4_Pin|TMUX_INH5_Pin|TMUX_INH6_Pin|TMUX_INH7_Pin
+                          |TMUX_INH8_Pin|TMUX_INH9_Pin|TMUX_INH10_Pin|TMUX_INH11_Pin
+                          |TMUX_INH12_Pin|TMUX_INH13_Pin|TMUX_INH14_Pin|TMUX_INH15_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOJ, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FET_EN6_Pin FET_EN5_Pin FET_EN19_Pin FET_EN18_Pin
+                           FET_EN17_Pin FET_EN16_Pin FET_EN31_Pin FET_EN30_Pin
+                           FET_EN29_Pin FET_EN56_Pin FET_EN55_Pin FET_EN54_Pin
+                           FET_EN53_Pin FET_EN52_Pin FET_EN51_Pin FET_EN49_Pin */
+  GPIO_InitStruct.Pin = FET_EN6_Pin|FET_EN5_Pin|FET_EN19_Pin|FET_EN18_Pin
+                          |FET_EN17_Pin|FET_EN16_Pin|FET_EN31_Pin|FET_EN30_Pin
+                          |FET_EN29_Pin|FET_EN56_Pin|FET_EN55_Pin|FET_EN54_Pin
+                          |FET_EN53_Pin|FET_EN52_Pin|FET_EN51_Pin|FET_EN49_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : IO1_Pin IO2_Pin TFT_RESET_Pin TFT_DC_Pin
+                           SD_CS_Pin LED1_Pin LED2_Pin */
+  GPIO_InitStruct.Pin = IO1_Pin|IO2_Pin|TFT_RESET_Pin|TFT_DC_Pin
+                          |SD_CS_Pin|LED1_Pin|LED2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : TMUX_S0_Pin TMUX_S1_Pin IMUX_S0_Pin IMUX_S1_Pin */
+  GPIO_InitStruct.Pin = TMUX_S0_Pin|TMUX_S1_Pin|IMUX_S0_Pin|IMUX_S1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FET_EN11_Pin FET_EN10_Pin FET_EN9_Pin FET_EN8_Pin
+                           FET_EN23_Pin FET_EN22_Pin FET_EN21_Pin FET_EN20_Pin
+                           FET_EN24_Pin FET_EN63_Pin FET_EN62_Pin FET_EN61_Pin
+                           FET_EN60_Pin FET_EN59_Pin FET_EN58_Pin FET_EN57_Pin */
+  GPIO_InitStruct.Pin = FET_EN11_Pin|FET_EN10_Pin|FET_EN9_Pin|FET_EN8_Pin
+                          |FET_EN23_Pin|FET_EN22_Pin|FET_EN21_Pin|FET_EN20_Pin
+                          |FET_EN24_Pin|FET_EN63_Pin|FET_EN62_Pin|FET_EN61_Pin
+                          |FET_EN60_Pin|FET_EN59_Pin|FET_EN58_Pin|FET_EN57_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SW1_Pin SW2_Pin SW3_Pin ENC_SW_Pin
+                           REVERSE_VOLTAGE_ALERT_Pin */
+  GPIO_InitStruct.Pin = SW1_Pin|SW2_Pin|SW3_Pin|ENC_SW_Pin
+                          |REVERSE_VOLTAGE_ALERT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : FET_EN50_Pin */
+  GPIO_InitStruct.Pin = FET_EN50_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(FET_EN50_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

@@ -35,10 +35,10 @@ typedef struct {
 
 // This can be used like the following to write to specific TMUX ID numbers:
 // HAL_GPIO_WritePin(tmux_inh_pins[1].port, tmux_inh_pins[1].pin, 1);
-static const TmuxInhibitPin tmux_inh_pins[NUM_TMUX] = {
-		{.port = TMUX_0_INH_GPIO_Port, .pin = TMUX_0_INH_Pin},	//TMUX_0_INH
-		{.port = TMUX_1_INH_GPIO_Port, .pin = TMUX_1_INH_Pin},	//TMUX_1_INH
-};
+//static const TmuxInhibitPin tmux_inh_pins[NUM_TMUX] = {
+//		{.port = TMUX_0_INH_GPIO_Port, .pin = TMUX_0_INH_Pin},	//TMUX_0_INH
+//		{.port = TMUX_1_INH_GPIO_Port, .pin = TMUX_1_INH_Pin},	//TMUX_1_INH
+//};
 
 
 
@@ -66,128 +66,128 @@ void UpdateLoadStageTemps(void){
 }
 
 // returns stage thermocouple temperature in celsius
-static TempConversionExitStatus ReadSingleStageTemp(uint32_t stage_num, TempResults * temp_results){
-
-	const LoadStageConfiguration *stage = GetPointerToSingleStageConfig(stage_num);
-
-	//inhibit all tmux's to ensure two tmux's aren't momentarily shorted together
-	for (int i = 0; i < NUM_TMUX; i++){
-		HAL_GPIO_WritePin(tmux_inh_pins[i].port, tmux_inh_pins[i].pin, 1);
-	}
-
-	//set address pins
-	uint32_t tmux_addr = stage->tmux_addr;
-	uint32_t tmux_s0 = tmux_addr & 1;
-	uint32_t tmux_s1 = (tmux_addr >> 1) & 1;
-	HAL_GPIO_WritePin(TMUX_S0_GPIO_Port, TMUX_S0_Pin, tmux_s0);
-	HAL_GPIO_WritePin(TMUX_S1_GPIO_Port, TMUX_S1_Pin, tmux_s1);
-
-	//uninhibit the TMUX we want
-	uint32_t tmux_number = stage->tmux_ID;
-	HAL_GPIO_WritePin(tmux_inh_pins[tmux_number].port, tmux_inh_pins[tmux_number].pin, 0);
-
-	//read thermistor and thermocouple signal simultaneously
-
-
-	//configure ADC
-	//proper dual mode config already done in injected ADC setup func.
-	ADC1->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
-
-	//setup timer trigger on ADC1 and enable
-	ADC1->CR2 &= ~((7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG);	//clear the bits so a lower value can be set than present, and so ADON isn't retriggered
-	ADC1->CR2 |= (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG | ADC_CR2_DMA;	// SW trigger, enable trigger, enable DMA
-
-	//setup SW trigger on ADC2, and enable trigger
-	ADC2->CR2 |= (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG;
-
-	//enable ADC scan mode
-	ADC1->CR1 |= ADC_CR1_SCAN;	//Not sure scan mode is actually needed here with a length of 1, not sure it hurts either though
-	ADC2->CR1 |= ADC_CR1_SCAN;
-
-	//clear sequence registers before configuration
-	ADC1->SQR1 = 0;
-	ADC1->SQR2 = 0;
-	ADC1->SQR3 = 0;
-	ADC2->SQR1 = 0;
-	ADC2->SQR2 = 0;
-	ADC2->SQR3 = 0;
-
-	#define NUM_TMUX_ADC_READS 1
-	//configure channels ADC1 = Thermocouple mux, ADC2 = Thermistor mux
-	//sequence of four of same channel
-	ADC1->SQR3 |= ADC_TC_MUX << ADC_SQR3_SQ1_Pos;
-	ADC1->SQR1 |= ADC_SQR1_L_SHIFT(NUM_TMUX_ADC_READS);
-
-
-	ADC2->SQR3 |= ADC_THERM_MUX << ADC_SQR3_SQ1_Pos;
-	ADC2->SQR1 |= ADC_SQR1_L_SHIFT(NUM_TMUX_ADC_READS);
-
-	//IF YOU DO A READ-MODIFY-WRITE ON ADC CR2 WITH ADON ALREADY ENABLED,
-	//AND DON'T ACTUALLY CHANGE ANYTHING, A CONVERSION WILL TRIGGER
-
-	typedef struct {
-		uint16_t thermocouple_adc;
-		uint16_t thermistor_adc;
-	} CombinedResults;
-
-	volatile CombinedResults results = {0};
-
-	//setup DMA to variable for result data
-	//ADC1 uses DMA ch 1
-	DMA1_Channel1->CCR = 0;	//Disable DMA channel before changing settings, in case of repeat calls
-	DMA1->IFCR = DMA_IFCR_CGIF1;	//Clear all DMA ch 1 interrupt flags
-	DMA1_Channel1->CPAR = (uint32_t)&(ADC1->DR);
-	DMA1_Channel1->CMAR = (uint32_t)&results;
-	DMA1_Channel1->CNDTR = NUM_TMUX_ADC_READS;
-	DMA1_Channel1->CCR = (1 << DMA_CCR_PL_Pos) | (2 << DMA_CCR_MSIZE_Pos) | (2 << DMA_CCR_PSIZE_Pos) | DMA_CCR_MINC | DMA_CCR_EN;	//Medium priority, 32 bit mem and periph. size, increment mem address, enabled DMA Channel
-
-	//send SW start to ADC
-	ADC1->CR2 |= ADC_CR2_SWSTART;
-
-	//wait for adc read to be done
-	while (!((DMA1->ISR & DMA_ISR_TCIF1) && (DMA1_Channel1->CNDTR == 0)));
-
-	int32_t thermistor_temp = thermistorADCtoTemp(results.thermistor_adc);
-
-	//check for out of bounds thermistor reading
-	if (thermistor_temp == 999999){
-		return TEMP_HIGH;
-	}
-	else if (thermistor_temp == -999999){
-		return TEMP_LOW;
-	}
-
-	int32_t thermistor_uV_equiv = thermocoupleTempToVoltage(thermistor_temp);
-
-	//check for out of bounds temp conversion
-	if (thermistor_uV_equiv == 999999){
-		return TEMP_HIGH;
-	}
-	else if (thermistor_uV_equiv == -999999){
-		return TEMP_LOW;
-	}
-
-	int32_t thermocouple_uV = thermocoupleADCtoVoltage(results.thermocouple_adc);
-
-	int32_t sum_uV = thermocouple_uV + thermistor_uV_equiv;
-
-	int32_t thermocouple_temp = thermocoupleVoltagetoTemp(sum_uV);
-
-	//check for out of bounds temp conversion
-	if (thermocouple_temp == 999999){
-		return TEMP_HIGH;
-	}
-	else if (thermocouple_temp == -999999){
-		return TEMP_LOW;
-	}
-
-
-	temp_results->tc_temp = thermocouple_temp;
-	temp_results->thermistor_temp = thermistor_temp;
-	return TEMP_OK;
-
-	#undef NUM_TMUX_ADC_READS
-}
+//static TempConversionExitStatus ReadSingleStageTemp(uint32_t stage_num, TempResults * temp_results){
+//
+//	const LoadStageConfiguration *stage = GetPointerToSingleStageConfig(stage_num);
+//
+//	//inhibit all tmux's to ensure two tmux's aren't momentarily shorted together
+//	for (int i = 0; i < NUM_TMUX; i++){
+//		HAL_GPIO_WritePin(tmux_inh_pins[i].port, tmux_inh_pins[i].pin, 1);
+//	}
+//
+//	//set address pins
+//	uint32_t tmux_addr = stage->tmux_addr;
+//	uint32_t tmux_s0 = tmux_addr & 1;
+//	uint32_t tmux_s1 = (tmux_addr >> 1) & 1;
+//	HAL_GPIO_WritePin(TMUX_S0_GPIO_Port, TMUX_S0_Pin, tmux_s0);
+//	HAL_GPIO_WritePin(TMUX_S1_GPIO_Port, TMUX_S1_Pin, tmux_s1);
+//
+//	//uninhibit the TMUX we want
+//	uint32_t tmux_number = stage->tmux_ID;
+//	HAL_GPIO_WritePin(tmux_inh_pins[tmux_number].port, tmux_inh_pins[tmux_number].pin, 0);
+//
+//	//read thermistor and thermocouple signal simultaneously
+//
+//
+//	//configure ADC
+//	//proper dual mode config already done in injected ADC setup func.
+//	ADC1->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
+//
+//	//setup timer trigger on ADC1 and enable
+//	ADC1->CR2 &= ~((7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG);	//clear the bits so a lower value can be set than present, and so ADON isn't retriggered
+//	ADC1->CR2 |= (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG | ADC_CR2_DMA;	// SW trigger, enable trigger, enable DMA
+//
+//	//setup SW trigger on ADC2, and enable trigger
+//	ADC2->CR2 |= (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG;
+//
+//	//enable ADC scan mode
+//	ADC1->CR1 |= ADC_CR1_SCAN;	//Not sure scan mode is actually needed here with a length of 1, not sure it hurts either though
+//	ADC2->CR1 |= ADC_CR1_SCAN;
+//
+//	//clear sequence registers before configuration
+//	ADC1->SQR1 = 0;
+//	ADC1->SQR2 = 0;
+//	ADC1->SQR3 = 0;
+//	ADC2->SQR1 = 0;
+//	ADC2->SQR2 = 0;
+//	ADC2->SQR3 = 0;
+//
+//	#define NUM_TMUX_ADC_READS 1
+//	//configure channels ADC1 = Thermocouple mux, ADC2 = Thermistor mux
+//	//sequence of four of same channel
+//	ADC1->SQR3 |= ADC_TC_MUX << ADC_SQR3_SQ1_Pos;
+//	ADC1->SQR1 |= ADC_SQR1_L_SHIFT(NUM_TMUX_ADC_READS);
+//
+//
+//	ADC2->SQR3 |= ADC_THERM_MUX << ADC_SQR3_SQ1_Pos;
+//	ADC2->SQR1 |= ADC_SQR1_L_SHIFT(NUM_TMUX_ADC_READS);
+//
+//	//IF YOU DO A READ-MODIFY-WRITE ON ADC CR2 WITH ADON ALREADY ENABLED,
+//	//AND DON'T ACTUALLY CHANGE ANYTHING, A CONVERSION WILL TRIGGER
+//
+//	typedef struct {
+//		uint16_t thermocouple_adc;
+//		uint16_t thermistor_adc;
+//	} CombinedResults;
+//
+//	volatile CombinedResults results = {0};
+//
+//	//setup DMA to variable for result data
+//	//ADC1 uses DMA ch 1
+//	DMA1_Channel1->CCR = 0;	//Disable DMA channel before changing settings, in case of repeat calls
+//	DMA1->IFCR = DMA_IFCR_CGIF1;	//Clear all DMA ch 1 interrupt flags
+//	DMA1_Channel1->CPAR = (uint32_t)&(ADC1->DR);
+//	DMA1_Channel1->CMAR = (uint32_t)&results;
+//	DMA1_Channel1->CNDTR = NUM_TMUX_ADC_READS;
+//	DMA1_Channel1->CCR = (1 << DMA_CCR_PL_Pos) | (2 << DMA_CCR_MSIZE_Pos) | (2 << DMA_CCR_PSIZE_Pos) | DMA_CCR_MINC | DMA_CCR_EN;	//Medium priority, 32 bit mem and periph. size, increment mem address, enabled DMA Channel
+//
+//	//send SW start to ADC
+//	ADC1->CR2 |= ADC_CR2_SWSTART;
+//
+//	//wait for adc read to be done
+//	while (!((DMA1->ISR & DMA_ISR_TCIF1) && (DMA1_Channel1->CNDTR == 0)));
+//
+//	int32_t thermistor_temp = thermistorADCtoTemp(results.thermistor_adc);
+//
+//	//check for out of bounds thermistor reading
+//	if (thermistor_temp == 999999){
+//		return TEMP_HIGH;
+//	}
+//	else if (thermistor_temp == -999999){
+//		return TEMP_LOW;
+//	}
+//
+//	int32_t thermistor_uV_equiv = thermocoupleTempToVoltage(thermistor_temp);
+//
+//	//check for out of bounds temp conversion
+//	if (thermistor_uV_equiv == 999999){
+//		return TEMP_HIGH;
+//	}
+//	else if (thermistor_uV_equiv == -999999){
+//		return TEMP_LOW;
+//	}
+//
+//	int32_t thermocouple_uV = thermocoupleADCtoVoltage(results.thermocouple_adc);
+//
+//	int32_t sum_uV = thermocouple_uV + thermistor_uV_equiv;
+//
+//	int32_t thermocouple_temp = thermocoupleVoltagetoTemp(sum_uV);
+//
+//	//check for out of bounds temp conversion
+//	if (thermocouple_temp == 999999){
+//		return TEMP_HIGH;
+//	}
+//	else if (thermocouple_temp == -999999){
+//		return TEMP_LOW;
+//	}
+//
+//
+//	temp_results->tc_temp = thermocouple_temp;
+//	temp_results->thermistor_temp = thermistor_temp;
+//	return TEMP_OK;
+//
+//	#undef NUM_TMUX_ADC_READS
+//}
 
 // Thermistor PN: NCU18XH103F60RB
 //  Opamp Gain: 3
@@ -403,5 +403,5 @@ void FanSpeedControl(void){
 	}
 
 
-	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, pwm_compare_val);
+	__HAL_TIM_SET_COMPARE(&FAN_PWM_TIM, TIM_CHANNEL_4, pwm_compare_val);
 }

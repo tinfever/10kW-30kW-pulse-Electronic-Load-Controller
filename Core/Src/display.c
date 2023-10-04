@@ -157,7 +157,7 @@ void DrawButton(Button* button){
 
 void EnableEvent(void){
 	SetSystemEnabled(true);
-	CalibrateAllStages();	//This is just for testing
+//	CalibrateAllStages();	//This is just for testing
 	button1.text = "DISABLE";
 	button1.action = DisableEvent;
 }
@@ -245,7 +245,7 @@ void CursorClampPosition(FieldData *selected_field_data){
 
 void HandleRotaryEncoder(void){
 	static uint32_t old_count = 0;
-	uint32_t new_count = __HAL_TIM_GET_COUNTER(&htim4);
+	uint32_t new_count = __HAL_TIM_GET_COUNTER(&ROTARY_ENCODER_TIM);
 
 	//figure out delta enc counts
 	int32_t delta_count = new_count - old_count;
@@ -258,14 +258,14 @@ void HandleRotaryEncoder(void){
 	//user quickly moves knob right again by one places (counter = 0), all before next input handler call
 	//Due to presence of underflow flag, and counter less than 0x7FFF, a correct delta of 0 would be interpreted as a delta of 65535.
 
-	bool overflow_detected = TIM4->SR & TIM_SR_UIF;
+	bool overflow_detected = ROTARY_ENCODER_TIM.Instance->SR & TIM_SR_UIF;
 	if (overflow_detected && new_count > 0x7FFF){	//underflow
 		delta_count -= 0x10000;		//Has to be the full 16-bit 0xFFFF + 1 due to weird zero index math
-		TIM4->SR &= ~TIM_SR_UIF;	//Clear the over/underflow flag
+		ROTARY_ENCODER_TIM.Instance->SR &= ~TIM_SR_UIF;	//Clear the over/underflow flag
 	}
 	else if (overflow_detected && new_count < 0x7FFF){	//overflow
 		delta_count += 0x10000;
-		TIM4->SR &= ~TIM_SR_UIF;
+		ROTARY_ENCODER_TIM.Instance->SR &= ~TIM_SR_UIF;
 	}
 
 	old_count = new_count;	//prepare for next time function is called

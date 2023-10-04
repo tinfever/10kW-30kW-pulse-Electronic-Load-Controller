@@ -22,6 +22,8 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "display.h"
+#include "adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -183,6 +185,40 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
+
+	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
+	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
+
+	//MeasureSystemVoltageCurrent();
+
+
+	//SW1 button handler
+	static uint32_t SW1_debounce = 0;
+	SW1_debounce = (SW1_debounce << 1) | !HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin);
+	if (SW1_debounce == 0x7FFFFFFF){
+		RegisterButtonPress(1);
+	}
+
+	//SW2 button handler
+	static uint32_t SW2_debounce = 0;
+	SW2_debounce = (SW2_debounce << 1) | !HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin);
+	if (SW2_debounce == 0x7FFFFFFF){
+		RegisterButtonPress(2);
+	}
+
+	//SW2 button handler
+	static uint32_t SW3_debounce = 0;
+	SW3_debounce = (SW3_debounce << 1) | !HAL_GPIO_ReadPin(SW3_GPIO_Port, SW3_Pin);
+	if (SW3_debounce == 0x7FFFFFFF){
+		RegisterButtonPress(3);
+	}
+
+	//rotary encoder button handler
+	static uint32_t SW4_debounce = 0;
+	SW4_debounce = (SW4_debounce << 1) | !HAL_GPIO_ReadPin(ENC_SW_GPIO_Port, ENC_SW_Pin);
+	if (SW4_debounce == 0x7FFFFFFF){
+		RegisterButtonPress(4);
+	}
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();

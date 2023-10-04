@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include "main.h"
 
-#define NUM_STAGES 8
+#define NUM_STAGES 64
 
 typedef enum {
 	SIZE_8R = 0,
