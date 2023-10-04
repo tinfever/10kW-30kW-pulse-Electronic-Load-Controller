@@ -652,7 +652,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOJ, TMUX_INH0_Pin|TMUX_INH1_Pin|TMUX_INH2_Pin|TMUX_INH3_Pin
                           |TMUX_INH4_Pin|TMUX_INH5_Pin|TMUX_INH6_Pin|TMUX_INH7_Pin
                           |TMUX_INH8_Pin|TMUX_INH9_Pin|TMUX_INH10_Pin|TMUX_INH11_Pin
-                          |TMUX_INH12_Pin|TMUX_INH13_Pin|TMUX_INH14_Pin|TMUX_INH15_Pin, GPIO_PIN_RESET);
+                          |TMUX_INH12_Pin|TMUX_INH13_Pin|TMUX_INH14_Pin|TMUX_INH15_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, FET_EN6_Pin|FET_EN5_Pin|FET_EN19_Pin|FET_EN18_Pin

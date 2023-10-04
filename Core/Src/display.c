@@ -211,7 +211,7 @@ void RightButtonEvent(void){
 void DisplayInit(void){
 	  BSP_LCD_Init();
 	  BSP_LCD_Clear(LCD_COLOR_BLACK);
-	  TIM4->SR &= !TIM_SR_UIF;	//Clear under/overflow flag for detection on rotary encoder timer
+	  ROTARY_ENCODER_TIM.Instance->SR &= !TIM_SR_UIF;	//Clear under/overflow flag for detection on rotary encoder timer
 }
 
 
@@ -492,15 +492,6 @@ void Draw_Pulsed_IHigh(void){
 
 
 }
-
-//typedef struct {
-//	char* label;
-//	uint32_t value;	//Can't just have a value, needs to be a function pointer to a function that returns a value, but then what if the values vary? And how would we handle values with dynamic units like milliseconds and seconds?
-//} SettingParam;
-//
-//void General_Editable_Setting_Draw(SettingParam * param){
-//
-//}
 
 void Draw_Pulsed_ILow(void){
 

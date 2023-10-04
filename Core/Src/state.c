@@ -20,14 +20,6 @@ const LoadStageParameters kLoadStageParamsBySize[kNumberOfStageSizes] = {	//Orde
 };
 
 const LoadStageConfiguration load_stage_configs[NUM_STAGES] = {
-//		{.size = &kLoadStageParamsBySize[SIZE_8R],		.io_port = FET_EN0_GPIO_Port, .io_pin = FET_EN0_Pin, .tmux_ID = 0, .tmux_addr = 0x0, .imux_adc_pin = ADC_IMUX_0B, .imux_addr = 0x0},	//Stage 0
-//		{.size = &kLoadStageParamsBySize[SIZE_4R],		.io_port = FET_EN1_GPIO_Port, .io_pin = FET_EN1_Pin, .tmux_ID = 0, .tmux_addr = 0x1, .imux_adc_pin = ADC_IMUX_0B, .imux_addr = 0x2},	//Stage 1
-//		{.size = &kLoadStageParamsBySize[SIZE_0R1],		.io_port = FET_EN2_GPIO_Port, .io_pin = FET_EN2_Pin, .tmux_ID = 0, .tmux_addr = 0x2, .imux_adc_pin = ADC_IMUX_0B, .imux_addr = 0x3},	//Stage 2
-//		{.size = &kLoadStageParamsBySize[SIZE_2R],		.io_port = FET_EN3_GPIO_Port, .io_pin = FET_EN3_Pin, .tmux_ID = 0, .tmux_addr = 0x3, .imux_adc_pin = ADC_IMUX_0B, .imux_addr = 0x1},	//Stage 3
-//		{.size = &kLoadStageParamsBySize[SIZE_1R],		.io_port = FET_EN4_GPIO_Port, .io_pin = FET_EN4_Pin, .tmux_ID = 1, .tmux_addr = 0x0, .imux_adc_pin = ADC_IMUX_0A, .imux_addr = 0x3},	//Stage 4
-//		{.size = &kLoadStageParamsBySize[SIZE_0R5],		.io_port = FET_EN5_GPIO_Port, .io_pin = FET_EN5_Pin, .tmux_ID = 1, .tmux_addr = 0x1, .imux_adc_pin = ADC_IMUX_0A, .imux_addr = 0x0},	//Stage 5
-//		{.size = &kLoadStageParamsBySize[SIZE_NULL],	.io_port = FET_EN6_GPIO_Port, .io_pin = FET_EN6_Pin, .tmux_ID = 1, .tmux_addr = 0x2, .imux_adc_pin = ADC_IMUX_0A, .imux_addr = 0x1},	//Stage 6
-//		{.size = &kLoadStageParamsBySize[SIZE_NULL],	.io_port = FET_EN7_GPIO_Port, .io_pin = FET_EN7_Pin, .tmux_ID = 1, .tmux_addr = 0x3, .imux_adc_pin = ADC_IMUX_0A, .imux_addr = 0x2},	//Stage 7
 
 		{.size = &kLoadStageParamsBySize[SIZE_NULL], .io_port = FET_EN0_GPIO_Port, .io_pin = FET_EN0_Pin, .tmux_ID = 0, .tmux_addr = 0, .imux_adc_pin = ADC_IMUX_OUT0, .imux_addr = 0},          // Stage 0
 		{.size = &kLoadStageParamsBySize[SIZE_NULL], .io_port = FET_EN1_GPIO_Port, .io_pin = FET_EN1_Pin, .tmux_ID = 0, .tmux_addr = 1, .imux_adc_pin = ADC_IMUX_OUT1, .imux_addr = 0},          // Stage 1
