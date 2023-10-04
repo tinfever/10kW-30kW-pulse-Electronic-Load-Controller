@@ -178,9 +178,11 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
-//  HAL_ADCEx_Calibration_Start(&hadc1);
-//  HAL_ADCEx_Calibration_Start(&hadc2);
+
+
   HAL_TIM_Encoder_Start(&ROTARY_ENCODER_TIM, TIM_CHANNEL_ALL);
+
+  ADCInit();
 //
 //  SetupInjectedDualADCReadForIRQ();
 //
@@ -226,7 +228,7 @@ task_list[1].enabled = true;
 
 task_list[5].RunTask = IO1_blink;
 task_list[5].period_ms = 500;
-task_list[5].enabled = true;
+task_list[5].enabled = false;
 
   /* USER CODE END 2 */
 

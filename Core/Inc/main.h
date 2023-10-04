@@ -325,7 +325,7 @@ void Error_Handler(void);
 // take care to only use macro for ADC channel number on correct ADC.
 // ADC_CHANNEL_14 means a different pin on different ADCs
 
-#define ADC_REMOTE_VSENSE ADC_CHANNEL_0		// ADC123
+#define ADC_VSENSE ADC_CHANNEL_0		// ADC123
 #define ADC_ISUM ADC_CHANNEL_1				// ADC123
 #define ADC_TC_MUX ADC_CHANNEL_4						// ADC12 *
 #define ADC_THERMISTOR_MUX ADC_CHANNEL_5				// ADC12 *
@@ -346,6 +346,13 @@ void Error_Handler(void);
 #define ADC_IMUX_OUT13 ADC_CHANNEL_4								// ADC3 *
 #define ADC_IMUX_OUT14 ADC_CHANNEL_5								// ADC3 *
 #define ADC_IMUX_OUT15 ADC_CHANNEL_10		// ADC123
+
+// Used as placeholder when sampling in triple simultaneous mode,
+// but only needing ADCs 1 and 2.
+// To avoid accidentally sampling same pin with multiple ADCs
+// Ex: If ADC1 was sampling CH0 and ADC3 was left at default for CH0, this would be a problem.
+// ADC3_IN8 = PF10 = not connected on PCB
+#define ADC3_NULL ADC_CHANNEL_8
 
 #define FAN_PWM_TIM htim11
 #define ROTARY_ENCODER_TIM htim3
