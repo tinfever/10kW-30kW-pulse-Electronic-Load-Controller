@@ -87,7 +87,7 @@ const LoadStageConfiguration load_stage_configs[NUM_STAGES] = {
 		{.size = &kLoadStageParamsBySize[SIZE_0R5], .io_port = FET_EN34_GPIO_Port, .io_pin = FET_EN34_Pin, .tmux_ID = 8, .tmux_addr = 2, .imux = &imux_configs[8], .imux_addr = 1},          // Stage 34
 		{.size = &kLoadStageParamsBySize[SIZE_0R5], .io_port = FET_EN35_GPIO_Port, .io_pin = FET_EN35_Pin, .tmux_ID = 8, .tmux_addr = 3, .imux = &imux_configs[9], .imux_addr = 1},          // Stage 35
 		{.size = &kLoadStageParamsBySize[SIZE_0R5], .io_port = FET_EN36_GPIO_Port, .io_pin = FET_EN36_Pin, .tmux_ID = 9, .tmux_addr = 0, .imux = &imux_configs[8], .imux_addr = 2},          // Stage 36
-		{.size = &kLoadStageParamsBySize[SIZE_0R1], .io_port = FET_EN37_GPIO_Port, .io_pin = FET_EN37_Pin, .tmux_ID = 9, .tmux_addr = 1, .imux = &imux_configs[9], .imux_addr = 2},          // Stage 37
+		{.size = &kLoadStageParamsBySize[SIZE_1R], .io_port = FET_EN37_GPIO_Port, .io_pin = FET_EN37_Pin, .tmux_ID = 9, .tmux_addr = 1, .imux = &imux_configs[9], .imux_addr = 2},          // Stage 37
 		{.size = &kLoadStageParamsBySize[SIZE_0R1], .io_port = FET_EN38_GPIO_Port, .io_pin = FET_EN38_Pin, .tmux_ID = 9, .tmux_addr = 2, .imux = &imux_configs[8], .imux_addr = 3},          // Stage 38
 		{.size = &kLoadStageParamsBySize[SIZE_0R1], .io_port = FET_EN39_GPIO_Port, .io_pin = FET_EN39_Pin, .tmux_ID = 9, .tmux_addr = 3, .imux = &imux_configs[9], .imux_addr = 3},          // Stage 39
 

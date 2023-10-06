@@ -215,9 +215,9 @@ task_list[1].enabled = true;
 //task_list[2].period_ms = 50;
 //task_list[2].enabled = true;
 //
-//task_list[3].RunTask = UpdateLoadStageTemps;
-//task_list[3].period_ms = 500;
-//task_list[3].enabled = true;
+task_list[3].RunTask = UpdateLoadStageTemps;
+task_list[3].period_ms = 500;
+task_list[3].enabled = true;
 //
 //task_list[4].RunTask = FanSpeedControl;
 //task_list[4].period_ms = 500;

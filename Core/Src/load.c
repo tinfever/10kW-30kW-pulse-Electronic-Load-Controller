@@ -202,6 +202,7 @@ void CalibrateAllStages(void){
 		if (GetStageNominalLoadResistance(i) != 0){
 			uint32_t cal_conductance = CalibrateSingleStage(i);
 			SetStageCalibratedConductance(i, cal_conductance);
+			HAL_Delay(1000);
 		}
 	}
 
@@ -343,6 +344,13 @@ uint32_t CalibrateSingleStage(uint32_t stage_num){
 //	ADC1->CR1 |= ADC_CR1_EOCIE;
 //	NVIC_EnableIRQ(ADC1_IRQn);
 
+	//Enable overrun IRQ for testing
+//	ADC1->CR1 |= ADC_CR1_OVRIE;
+//	ADC2->CR1 |= ADC_CR1_OVRIE;
+//	ADC3->CR1 |= ADC_CR1_OVRIE;
+//	NVIC_EnableIRQ(ADC_IRQn);
+
+
 	TIM4->CR1 |= TIM_CR1_CEN | TIM_CR1_OPM;	//Enable timer in oneshot mode
 	stage_being_calibrated->io_port->BSRR = stage_being_calibrated->io_pin << 0;		//Turn on stage
 
@@ -397,6 +405,23 @@ void TIM4_IRQHandler(void){
 		stage_being_calibrated->io_port->BSRR = stage_being_calibrated->io_pin << 16;	//Turn off stage
 	}
 
+}
+
+void ADC_IRQHandler(void){
+
+	if (ADC1->SR & ADC_SR_OVR) {
+		ADC1->SR = ~ADC_SR_OVR;
+	}
+	if (ADC2->SR & ADC_SR_OVR) {
+		ADC2->SR = ~ADC_SR_OVR;
+	}
+	if (ADC3->SR & ADC_SR_OVR) {
+		ADC3->SR = ~ADC_SR_OVR;
+	}
+
+
+		HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
+		HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
 }
 
 //void ADC1_2_IRQHandler(void){
