@@ -158,7 +158,8 @@ void DrawButton(Button* button){
 void EnableEvent(void){
 	SetSystemEnabled(true);
 //	CalibrateAllStages();	//This is just for testing
-	CalibrateSingleStage(2);
+	//CalibrateSingleStage(2);
+	UpdateLoadStageTemps();
 	button1.text = "DISABLE";
 	button1.action = DisableEvent;
 }

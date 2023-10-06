@@ -351,6 +351,11 @@ uint32_t CalibrateSingleStage(uint32_t stage_num){
 	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
 	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
 
+	// Note: Could actually just turn off stage right here and not need the IRQ to fire and do it.
+	// No real need for calibration pulse to be precisely 200us long
+	// Timing only matters for time until ADC reads start.
+	// Pulse can end any time after ADC reads are finished.
+
 	//Disable DMA on ADCs for other uses
 	ADC123_COMMON->CCR &= ~ADC_CCR_DMA_Msk;
 	while (DMA2_Stream0->CR & DMA_SxCR_EN);	//Wait for EN bit to reset
