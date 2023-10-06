@@ -398,8 +398,29 @@ void DrawLiveData(void){
 	fontwidth = BSP_LCD_GetFont()->Width;
 
 	// Temperature of hottest stage, and its stage number
-	uint32_t max_temp_stage = GetMaxThermocoupleTempStageNum();
-	int32_t max_temp = GetStageThermocoupleTemp(max_temp_stage) / 100; //convert from millicelsius to celsius in 0.1C increments
+	uint32_t new_max_temp_stage = GetMaxThermocoupleTempStageNum();
+	int32_t new_max_temp = GetStageThermocoupleTemp(new_max_temp_stage);
+
+	static uint32_t last_max_temp_stage = 0;
+	int32_t last_max_temp = GetStageThermocoupleTemp(last_max_temp_stage);
+
+	// if new max temp is more than 0.5C different than last stage, use new max stage, otherwise use last max stage
+	int32_t max_temp = 0;
+	uint32_t max_temp_stage = 0;
+
+	if (abs((int32_t)(new_max_temp - last_max_temp)) > 500){
+		max_temp = new_max_temp / 100; // Use new max stage, convert from millicelsius to celsius in 0.1C increments
+		max_temp_stage = new_max_temp_stage;
+		last_max_temp_stage = new_max_temp_stage;
+	}
+	else{
+		max_temp = last_max_temp / 100; // Use last max stage, convert from millicelsius to celsius in 0.1C increments
+		max_temp_stage = last_max_temp_stage;
+	}
+
+
+
+	//int32_t max_temp = GetStageThermocoupleTemp(max_temp_stage) / 100; //convert from millicelsius to celsius in 0.1C increments
 	char max_temp_text[6];
 	uint32ToDecimalString(max_temp_text, 6, max_temp, 1, 0, 2);
 	int max_temp_text_length = strlen(max_temp_text);
