@@ -210,155 +210,186 @@ void CalibrateAllStages(void){
 
 //accepts the stage number as an argument
 //returns measured conductance value
-//uint32_t CalibrateSingleStage(uint32_t stage_num){
-//	// Turn on stage while simultaneously starting a timer that will trigger an ADC read after 50us
-//	// The counter of the timer will overflow after 100us and stop due to one shot mode.
-//	// TIM overflow will trigger an interrupt which will turn off the load stage.
-//
-//	stage_being_calibrated = GetPointerToSingleStageConfig(stage_num);
-//
-//	//Using timer 3
-//	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-//	TIM3->PSC = 0;
-//	TIM3->CCR1 = 12599;	//do ADC read after 175us	(leaving enough time in case SysTick IRQ causes ADC delay during 16x sampling
-//	TIM3->ARR = 14399;	//200us pulse
-//	TIM3->CCMR1 |= 7 << TIM_CCMR1_OC1M_Pos;	//PWM mode 2, OC1REF signal high when CNT >= CCR
-//	TIM3->CR2 |= 4 << TIM_CR2_MMS_Pos;	//OC1REF signal is used as trigger output (TRGO), used for ADC triggering
-//	TIM3->SR = 0;
-//	TIM3->DIER |= TIM_DIER_UIE;	//Enable interrupt on overflow/update
-//	NVIC_EnableIRQ(TIM3_IRQn);
-//
-//	//get mux address and decode
-//	uint32_t imux_address = stage_being_calibrated->imux_addr;
-//	uint32_t imux_addr0 = imux_address & 0x1;
-//	uint32_t imux_addr1 = (imux_address >> 1) & 0x1;
-//	HAL_GPIO_WritePin(IMUX_S0_GPIO_Port, IMUX_S0_Pin, imux_addr0);
-//	HAL_GPIO_WritePin(IMUX_S1_GPIO_Port, IMUX_S1_Pin, imux_addr1);
-//
-//	//get adc pin to read
-//	uint32_t adc_pin_to_read = stage_being_calibrated->imux_adc_pin;
-//
-//	//configure ADC
-//	//proper dual mode config already done in injected ADC setup func.
-//	ADC1->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
-//
-//	//setup timer trigger on ADC1 and enable
-//	ADC1->CR2 &= ~((7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG);	//clear the bits so a lower value can be set than present, and so ADON isn't retriggered
-//	ADC1->CR2 |= (4 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG | ADC_CR2_DMA;	// Timer 3 TRGO event, enable trigger, enable DMA
-//
-//	//setup SW trigger on ADC2, and enable trigger
-//	ADC2->CR2 |= (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG;
-//
-//	//enable ADC scan mode
-//	ADC1->CR1 |= ADC_CR1_SCAN;
-//	ADC2->CR1 |= ADC_CR1_SCAN;
-//
-//	//clear sequence registers before configuration
-//	ADC1->SQR1 = 0;
-//	ADC1->SQR2 = 0;
-//	ADC1->SQR3 = 0;
-//	ADC2->SQR1 = 0;
-//	ADC2->SQR2 = 0;
-//	ADC2->SQR3 = 0;
-//
-//	#define NUM_CAL_ADC_READS 16
-//	//configure channels ADC1 = mux, ADC2 = vsense
-//	//sequence of four of same channel
-//	ADC1->SQR3 |= adc_pin_to_read << ADC_SQR3_SQ1_Pos;
-//	ADC1->SQR3 |= adc_pin_to_read << ADC_SQR3_SQ2_Pos;
-//	ADC1->SQR3 |= adc_pin_to_read << ADC_SQR3_SQ3_Pos;
-//	ADC1->SQR3 |= adc_pin_to_read << ADC_SQR3_SQ4_Pos;
-//	ADC1->SQR3 |= adc_pin_to_read << ADC_SQR3_SQ5_Pos;
-//	ADC1->SQR3 |= adc_pin_to_read << ADC_SQR3_SQ6_Pos;
-//	ADC1->SQR2 |= adc_pin_to_read << ADC_SQR2_SQ7_Pos;
-//	ADC1->SQR2 |= adc_pin_to_read << ADC_SQR2_SQ8_Pos;
-//	ADC1->SQR2 |= adc_pin_to_read << ADC_SQR2_SQ9_Pos;
-//	ADC1->SQR2 |= adc_pin_to_read << ADC_SQR2_SQ10_Pos;
-//	ADC1->SQR2 |= adc_pin_to_read << ADC_SQR2_SQ11_Pos;
-//	ADC1->SQR2 |= adc_pin_to_read << ADC_SQR2_SQ12_Pos;
-//	ADC1->SQR1 |= adc_pin_to_read << ADC_SQR1_SQ13_Pos;
-//	ADC1->SQR1 |= adc_pin_to_read << ADC_SQR1_SQ14_Pos;
-//	ADC1->SQR1 |= adc_pin_to_read << ADC_SQR1_SQ15_Pos;
-//	ADC1->SQR1 |= adc_pin_to_read << ADC_SQR1_SQ16_Pos;
-//	ADC1->SQR1 |= ADC_SQR1_L_SHIFT(NUM_CAL_ADC_READS);
-//
-//
-//	ADC2->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ1_Pos;
-//	ADC2->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ2_Pos;
-//	ADC2->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ3_Pos;
-//	ADC2->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ4_Pos;
-//	ADC2->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ5_Pos;
-//	ADC2->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ6_Pos;
-//	ADC2->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ7_Pos;
-//	ADC2->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ8_Pos;
-//	ADC2->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ9_Pos;
-//	ADC2->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ10_Pos;
-//	ADC2->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ11_Pos;
-//	ADC2->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ12_Pos;
-//	ADC2->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ13_Pos;
-//	ADC2->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ14_Pos;
-//	ADC2->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ15_Pos;
-//	ADC2->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ16_Pos;
-//	ADC2->SQR1 |= ADC_SQR1_L_SHIFT(NUM_CAL_ADC_READS);
-//
-//	//IF YOU DO A READ-MODIFY-WRITE ON ADC CR2 WITH ADON ALREADY ENABLED,
-//	//AND DON'T ACTUALLY CHANGE ANYTHING, A CONVERSION WILL TRIGGER
-//
-//	typedef struct {
-//		uint16_t current_adc;
-//		uint16_t voltage_adc;
-//	} CombinedResults;
-//
-//	volatile CombinedResults results[NUM_CAL_ADC_READS] = {0};
-//
-//	//setup DMA to variable for result data
-//	//ADC1 uses DMA ch 1
-//	DMA1_Channel1->CCR = 0;	//Disable DMA channel before changing settings, in case of repeat calls
-//	DMA1->IFCR = DMA_IFCR_CGIF1;	//Clear all DMA ch 1 interrupt flags
-//	DMA1_Channel1->CPAR = (uint32_t)&(ADC1->DR);
-//	DMA1_Channel1->CMAR = (uint32_t)results;
-//	DMA1_Channel1->CNDTR = NUM_CAL_ADC_READS;
-//	DMA1_Channel1->CCR = (1 << DMA_CCR_PL_Pos) | (2 << DMA_CCR_MSIZE_Pos) | (2 << DMA_CCR_PSIZE_Pos) | DMA_CCR_MINC | DMA_CCR_EN;	//Medium priority, 32 bit mem and periph. size, increment mem address, enabled DMA Channel
-//
-//
-//
-//	//TESTING
-//	//Enable EOC interrupt
-////	ADC1->CR1 |= ADC_CR1_EOCIE;
-////	NVIC_EnableIRQ(ADC1_IRQn);
-//
-//	TIM3->CR1 |= TIM_CR1_CEN | TIM_CR1_OPM;	//Enable timer in oneshot mode
-//	stage_being_calibrated->io_port->BSRR = stage_being_calibrated->io_pin << 0;		//Turn on stage
-//
-//	//wait for adc read to be done
-//	while (!((DMA1->ISR & DMA_ISR_TCIF1) && (DMA1_Channel1->CNDTR == 0)));
-//	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
-//	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
-//
-//	uint32_t current_adc_sum = 0;
-//	uint32_t voltage_adc_sum = 0;
-//	for (int i = 0; i < NUM_CAL_ADC_READS; i++){
-//		current_adc_sum += results[i].current_adc;
-//		voltage_adc_sum += results[i].voltage_adc;
-//	}
-//
-//
-//	uint32_t voltage_mV = ConvertVsenseADCtomV(voltage_adc_sum) / NUM_CAL_ADC_READS;
-//	uint32_t current_mA = ConvertStageCurrentADCtomA(current_adc_sum, stage_being_calibrated->size->shunt_uOhms) / NUM_CAL_ADC_READS;
-//
-//	uint32_t conductance_mA_per_mV = 1000 * current_mA / voltage_mV;
-//
-//	while(TIM3->CR1 & TIM_CR1_CEN);	//Wait for timer to be done
-//
-//	return conductance_mA_per_mV;
-//	#undef NUM_CAL_ADC_READS
-//}
+uint32_t CalibrateSingleStage(uint32_t stage_num){
+	// Turn on stage while simultaneously starting a timer that will trigger an ADC read after 175us
+	// The counter of the timer will overflow after 200us and stop due to one shot mode.
+	// TIM overflow will trigger an interrupt which will turn off the load stage.
 
-void TIM3_IRQHandler(void){
+	stage_being_calibrated = GetPointerToSingleStageConfig(stage_num);
 
-	if (TIM3->SR & TIM_SR_UIF){
+	// Using timer 4
+	// APB1 Timer clock is 84 MHz
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
+	TIM4->PSC = 0;
+	TIM4->CCR4 = 14700 - 1;	//do ADC read after 175us	(leaving enough time in case SysTick IRQ causes ADC delay during 16x sampling
+	TIM4->ARR = 16800 - 1;	//200us pulse
+	TIM4->CCMR2 |= 7 << TIM_CCMR2_OC4M_Pos;	//PWM mode 2, OC4REF signal high when CNT >= CCR
+	TIM4->CCER |= TIM_CCER_CC4E; //Enable CC4 output signal, but it won't go to any pin since alt. function registers not setup
+	TIM4->SR = 0;
+	TIM4->DIER |= TIM_DIER_UIE;	//Enable interrupt on overflow/update
+	NVIC_EnableIRQ(TIM4_IRQn);
+
+	//get mux address and decode
+	uint32_t imux_address = stage_being_calibrated->imux_addr;
+	uint32_t imux_addr0 = imux_address & 0x1;
+	uint32_t imux_addr1 = (imux_address >> 1) & 0x1;
+	HAL_GPIO_WritePin(IMUX_S0_GPIO_Port, IMUX_S0_Pin, imux_addr0);
+	HAL_GPIO_WritePin(IMUX_S1_GPIO_Port, IMUX_S1_Pin, imux_addr1);
+
+	//configure ADC
+	//proper triple mode config already done in ADC init func.
+	ADC1->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
+
+	//setup timer trigger on ADC1 and enable
+	ADC1->CR2 &= ~(ADC_CR2_EXTEN_Msk | ADC_CR2_EXTSEL_Msk);	// Clear bits to confirm starting with zeros
+	ADC1->CR2 |= (9 << ADC_CR2_EXTSEL_Pos) | (1 << ADC_CR2_EXTEN_Pos);	// EXTSEL 1001: Timer 4 CC4 event, EXTEN 01: Trigger detection on the rising edge
+	ADC123_COMMON->CCR |= (1 << ADC_CCR_DMA_Pos); // Enable DMA with ADCs in triple mode
+
+	//clear sequence registers before configuration
+	ADC1->SQR1 = 0;
+	ADC1->SQR2 = 0;
+	ADC1->SQR3 = 0;
+	ADC2->SQR1 = 0;
+	ADC2->SQR2 = 0;
+	ADC2->SQR3 = 0;
+	ADC3->SQR1 = 0;
+	ADC3->SQR2 = 0;
+	ADC3->SQR3 = 0;
+
+	#define NUM_CAL_ADC_READS 16
+
+	//configure channels ADC1 = vsense, ADC2 = imux sometimes, ADC3 = imux sometimes
+
+	ADC1->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ1_Pos;
+	ADC1->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ2_Pos;
+	ADC1->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ3_Pos;
+	ADC1->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ4_Pos;
+	ADC1->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ5_Pos;
+	ADC1->SQR3 |= ADC_VSENSE << ADC_SQR3_SQ6_Pos;
+	ADC1->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ7_Pos;
+	ADC1->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ8_Pos;
+	ADC1->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ9_Pos;
+	ADC1->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ10_Pos;
+	ADC1->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ11_Pos;
+	ADC1->SQR2 |= ADC_VSENSE << ADC_SQR2_SQ12_Pos;
+	ADC1->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ13_Pos;
+	ADC1->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ14_Pos;
+	ADC1->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ15_Pos;
+	ADC1->SQR1 |= ADC_VSENSE << ADC_SQR1_SQ16_Pos;
+	ADC1->SQR1 |= (NUM_CAL_ADC_READS - 1) << ADC_SQR1_L_Pos;
+
+
+	// Configure ADC 2 or 3 for specific IMUX pin to that sequence
+	uint32_t imux_channel_num = stage_being_calibrated->imux->channel_num;
+	uint32_t imux_adc_num = stage_being_calibrated->imux->ADC_num;
+	ADC_TypeDef* imux_adc_instance = stage_being_calibrated->imux->ADC_instance;
+
+	imux_adc_instance->SQR3 |= imux_channel_num << ADC_SQR3_SQ1_Pos;
+	imux_adc_instance->SQR3 |= imux_channel_num << ADC_SQR3_SQ2_Pos;
+	imux_adc_instance->SQR3 |= imux_channel_num << ADC_SQR3_SQ3_Pos;
+	imux_adc_instance->SQR3 |= imux_channel_num << ADC_SQR3_SQ4_Pos;
+	imux_adc_instance->SQR3 |= imux_channel_num << ADC_SQR3_SQ5_Pos;
+	imux_adc_instance->SQR3 |= imux_channel_num << ADC_SQR3_SQ6_Pos;
+	imux_adc_instance->SQR2 |= imux_channel_num << ADC_SQR2_SQ7_Pos;
+	imux_adc_instance->SQR2 |= imux_channel_num << ADC_SQR2_SQ8_Pos;
+	imux_adc_instance->SQR2 |= imux_channel_num << ADC_SQR2_SQ9_Pos;
+	imux_adc_instance->SQR2 |= imux_channel_num << ADC_SQR2_SQ10_Pos;
+	imux_adc_instance->SQR2 |= imux_channel_num << ADC_SQR2_SQ11_Pos;
+	imux_adc_instance->SQR2 |= imux_channel_num << ADC_SQR2_SQ12_Pos;
+	imux_adc_instance->SQR1 |= imux_channel_num << ADC_SQR1_SQ13_Pos;
+	imux_adc_instance->SQR1 |= imux_channel_num << ADC_SQR1_SQ14_Pos;
+	imux_adc_instance->SQR1 |= imux_channel_num << ADC_SQR1_SQ15_Pos;
+	imux_adc_instance->SQR1 |= imux_channel_num << ADC_SQR1_SQ16_Pos;
+	imux_adc_instance->SQR1 |= (NUM_CAL_ADC_READS - 1) << ADC_SQR1_L_Pos;
+
+	// Determine the unused ADC that needed to be configured for a safe channel
+	ADC_TypeDef* unused_adc_instance = 0;
+	uint32_t unused_adc_channel = 0;
+	if (imux_adc_num == 2){
+		unused_adc_instance = ADC3;
+		unused_adc_channel = ADC3_NULL;
+	}
+	else {
+		unused_adc_instance = ADC2;
+		unused_adc_channel = ADC_ISUM;	//ISUM is safe to read because we definitely won't be measuring that on ADC1 or ADC3. If not controlled, it would be possible that ADC1 is set to CH0 for vsense, ADC2 could also be unintentionally left set to CH0 causing a conflict, while ADC3 is measuring some imux
+	}
+
+	// Configure the unused ADC for a null pin that won't conflict
+	unused_adc_instance->SQR3 |= unused_adc_channel << ADC_SQR3_SQ1_Pos;
+	unused_adc_instance->SQR1 |= 0 << ADC_SQR1_L_Pos;	// Leaving at default of zero, for a single read, This will finish before other ADCs do but I think this should be okay? Not sure how DMA will behave with this. Hopefully just transferring same data repeatedly.
+
+	typedef struct {
+		uint16_t voltage_adc;
+		uint16_t ADC2_result;
+		uint16_t ADC3_result;
+	} CombinedResults;
+
+	volatile CombinedResults results[NUM_CAL_ADC_READS] = {0};
+
+	//setup DMA to variable for result data
+	//ADC1 (master) uses DMA2, Stream 0, channel 0
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+	DMA2_Stream0->CR &= ~DMA_SxCR_EN_Msk;	//Disable DMA channel for config
+	while (DMA2_Stream0->CR & DMA_SxCR_EN);	//Wait for EN bit to reset
+	DMA2->LIFCR |= DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 | DMA_LIFCR_CTEIF0 | DMA_LIFCR_CDMEIF0 | DMA_LIFCR_CFEIF0;	// Clear interrupt flags
+	DMA2_Stream0->PAR = (uint32_t)&(ADC123_COMMON->CDR);	// Set peripheral address
+	DMA2_Stream0->M0AR = (uint32_t)results; // Set memory address
+	DMA2_Stream0->NDTR = 3*NUM_CAL_ADC_READS;	//Set number of data transfers, 3 ADCs x 16 reads each
+	DMA2_Stream0->CR |= (0 << DMA_SxCR_CHSEL_Pos) | (2 << DMA_SxCR_PL_Pos) | (1 << DMA_SxCR_MSIZE_Pos) | (1 << DMA_SxCR_PSIZE_Pos) | DMA_SxCR_MINC; 		// Channel 0, Priority High, 16-bit mem size, 16 bit periph. size, Periph to memory mode (default)
+	DMA2_Stream0->CR |= DMA_SxCR_EN;	//Enable DMA
+
+	//TESTING
+	//Enable EOC interrupt
+//	ADC1->CR1 |= ADC_CR1_EOCIE;
+//	NVIC_EnableIRQ(ADC1_IRQn);
+
+	TIM4->CR1 |= TIM_CR1_CEN | TIM_CR1_OPM;	//Enable timer in oneshot mode
+	stage_being_calibrated->io_port->BSRR = stage_being_calibrated->io_pin << 0;		//Turn on stage
+
+	//wait for adc read to be done
+	while (!(DMA2->LISR & DMA_LISR_TCIF0));
+	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
+	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
+
+	//Disable DMA on ADCs for other uses
+	ADC123_COMMON->CCR &= ~ADC_CCR_DMA_Msk;
+	while (DMA2_Stream0->CR & DMA_SxCR_EN);	//Wait for EN bit to reset
+
+	uint32_t current_adc_sum = 0;
+	uint32_t voltage_adc_sum = 0;
+	for (int i = 0; i < NUM_CAL_ADC_READS; i++){
+		if (imux_adc_num == 2){
+			current_adc_sum += results[i].ADC2_result;
+		}
+		else {
+			current_adc_sum += results[i].ADC3_result;
+		}
+
+		voltage_adc_sum += results[i].voltage_adc;
+	}
+
+
+	uint32_t voltage_mV = ConvertVsenseADCtomV(voltage_adc_sum) / NUM_CAL_ADC_READS;
+	uint32_t current_mA = ConvertStageCurrentADCtomA(current_adc_sum, stage_being_calibrated->size->shunt_uOhms) / NUM_CAL_ADC_READS;
+
+	uint32_t conductance_mA_per_mV = 1000 * current_mA / voltage_mV;
+
+	while(TIM4->CR1 & TIM_CR1_CEN);	//Wait for timer to be done
+
+	return conductance_mA_per_mV;
+	#undef NUM_CAL_ADC_READS
+}
+
+void TIM4_IRQHandler(void){
+
+
+	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
+	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
+
+	if (TIM4->SR & TIM_SR_UIF){
+		//flag must be cleared first, otherwise IRQ handler is entered twice due to internal clearing delay
+		TIM4->SR &= ~TIM_SR_UIF;	//Clear interrupt flag
 		stage_being_calibrated->io_port->BSRR = stage_being_calibrated->io_pin << 16;	//Turn off stage
-		TIM3->SR &= ~TIM_SR_UIF;	//Clear interrupt flag
 	}
 
 }

@@ -12,7 +12,7 @@
 static bool adc_initialized = false;
 
 uint32_t ConvertSystemCurrentADCtomA(uint32_t adc_count){
-	uint32_t result_mA = 100 * 3000 * adc_count / 4096;	//100mA/mV, 3000mV Vref, 12 bit ADC
+	uint32_t result_mA = (uint64_t)1000 * 3000 * adc_count / 4096;	//1000mA/mV, 3000mV Vref, 12 bit ADC
 	return result_mA;
 }
 
@@ -49,16 +49,23 @@ void ADCInit(void){
 	// Setup injected simultaneous ADC read for current and voltage measurements
 	ADC123_COMMON->CCR |= 0x11 << ADC_CCR_MULTI_Pos;	// 10001: Triple Combined regular simultaneous + injected simultaneous mode
 
-
-
 	// Using default channel sample time of 3 clock cycles = 143ns, setting 00
 
 	// Using default injected sequence length of 1, setting 00
 
 	// Configure injected channels for current and voltage, with placeholder for ADC3
-	ADC1->JSQR |= ADC_ISUM << ADC_JSQR_JSQ4_Pos;
-	ADC2->JSQR |= ADC_VSENSE << ADC_JSQR_JSQ4_Pos;
+	ADC1->JSQR |= ADC_VSENSE << ADC_JSQR_JSQ4_Pos;
+	ADC2->JSQR |= ADC_ISUM << ADC_JSQR_JSQ4_Pos;
 	ADC3->JSQR |= ADC3_NULL << ADC_JSQR_JSQ4_Pos;
+
+    /* Delay for ADC stabilization time */
+    /* Compute number of CPU cycles to wait for */
+	uint32_t coreclock = HAL_RCC_GetSysClockFreq();
+    uint32_t counter = (ADC_STAB_DELAY_US * (coreclock / 1000000U));
+    while(counter != 0U)
+    {
+      counter--;
+    }
 
 	adc_initialized = true;
 
@@ -73,9 +80,8 @@ void MeasureSystemVoltageCurrent(void){
 		ADC1->CR2 |= ADC_CR2_JSWSTART;
 		while(!(ADC1->SR & ADC_SR_JEOC));	//assuming when ADC1 is done, ADC2 is done too
 
-
-		uint32_t current_adc = ADC1->JDR1;
-		uint32_t voltage_adc = ADC2->JDR1;
+		uint32_t voltage_adc = ADC1->JDR1;
+		uint32_t current_adc = ADC2->JDR1;
 		// ignoring ADC3 result
 
 		//printf("current_adc, voltage_adc, %lu, %lu\n", current_adc, voltage_adc);

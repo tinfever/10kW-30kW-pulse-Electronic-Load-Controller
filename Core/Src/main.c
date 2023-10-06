@@ -183,10 +183,7 @@ int main(void)
   HAL_TIM_Encoder_Start(&ROTARY_ENCODER_TIM, TIM_CHANNEL_ALL);
 
   ADCInit();
-//
-//  SetupInjectedDualADCReadForIRQ();
-//
-//  LoadStageInit();
+
 
   //start PWM fan control
   //default fan speed is 30%
@@ -196,8 +193,8 @@ int main(void)
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-//  //Stop TIM3 during break while debugging
-//  DBGMCU->CR |= DBGMCU_CR_DBG_TIM3_STOP;
+//  //Stop TIM4 during break while debugging
+  DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM4_STOP;
 
 
 #define NUM_TASKS 10

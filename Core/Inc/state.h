@@ -32,6 +32,11 @@ typedef struct {
 	const uint32_t shunt_uOhms;
 } LoadStageParameters;
 
+typedef struct {
+	const uint32_t channel_num;
+	const uint32_t ADC_num;
+	 ADC_TypeDef* const ADC_instance;
+} ImuxConfig;
 
 typedef struct {
 	const LoadStageParameters *size;
@@ -39,7 +44,8 @@ typedef struct {
 	uint16_t io_pin;
 	uint32_t tmux_ID;
 	uint32_t tmux_addr;
-	uint32_t imux_adc_pin;
+	//uint32_t imux_adc_pin;
+	const ImuxConfig * imux;
 	uint32_t imux_addr;
 } LoadStageConfiguration;
 
