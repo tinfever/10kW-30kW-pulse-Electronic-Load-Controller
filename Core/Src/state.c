@@ -19,10 +19,7 @@ const LoadStageParameters kLoadStageParamsBySize[kNumberOfStageSizes] = {	//Orde
 		{.load_mOhm = 0,	.mA_per_V = 0, .watt_rating = 0, .shunt_uOhms = 0},				//SIZE_NULL
 };
 
-// Need imux_ID referenced array that contains channel number in form of ADC_IMUX_OUT0, ADC number 2 or 3 variable form for programatic access, and the pointer to the ADC instance from ADC2 or ADC3 macro
-
-
-
+// imux_ID referenced array that contains channel number in form of ADC_IMUX_OUT0, ADC number 2 or 3 variable form for programatic access, and the pointer to the ADC instance from ADC2 or ADC3 macro
 #define NUM_IMUX 16
 const ImuxConfig imux_configs[NUM_IMUX] = {
 		{.channel_num = ADC_IMUX_OUT0, .ADC_num = 2, .ADC_instance = ADC2},
@@ -225,6 +222,18 @@ uint32_t GetVSenseAverage(void){
 	}
 	uint32_t result = sum / size;
 	return result;
+}
+
+uint32_t GetVSenseLatest(void){
+
+	// TODO: This function does not take into account a startup scenario where the head is at 0 because nothing has been recorded yet.
+	// This might not be an issue though since no one will press enable button in less than 1ms after startup before a voltage has been read.
+
+	int location = system_data.voltage_mV_buf_head - 1;
+	if (location < 0){
+		location = system_data.voltage_mV_buf_size - 1;
+	}
+	return system_data.voltage_mV_buf[location];
 }
 
 uint32_t GetISenseAverage(void){

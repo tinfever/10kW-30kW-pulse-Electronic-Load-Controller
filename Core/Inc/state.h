@@ -44,7 +44,6 @@ typedef struct {
 	uint16_t io_pin;
 	uint32_t tmux_ID;
 	uint32_t tmux_addr;
-	//uint32_t imux_adc_pin;
 	const ImuxConfig * imux;
 	uint32_t imux_addr;
 } LoadStageConfiguration;
@@ -88,6 +87,7 @@ void SetStageTemps(uint32_t stage_num, int32_t tc_temp, int32_t thermistor_temp)
 bool isStagePresent(uint32_t stage_num);
 uint32_t GetMaxThermocoupleTempStageNum(void);
 int32_t GetStageThermocoupleTemp(uint32_t stage_num);
+uint32_t GetVSenseLatest(void);
 
 
 #endif /* INC_STATE_H_ */

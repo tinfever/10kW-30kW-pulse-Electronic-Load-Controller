@@ -157,8 +157,14 @@ void DrawButton(Button* button){
 
 void EnableEvent(void){
 	SetSystemEnabled(true);
-	//CalibrateAllStages();	//This is just for testing
-	CalibrateSingleStage(53);
+
+	//This is just for testing
+	static bool is_calibrated = false;
+	if (!is_calibrated && GetVSenseAverage() > 2000){	//Make sure voltage is reasonable
+		CalibrateAllStages();
+		is_calibrated = true;
+	}
+
 	button1.text = "DISABLE";
 	button1.action = DisableEvent;
 }
@@ -367,15 +373,15 @@ void DrawLiveData(void){
 	// Current
 	uint32_t current_mA = GetISenseAverage();
 	char itext[8];
-	uint32ToDecimalString(itext, 8, current_mA, 3, 6, 4);
+	uint32ToDecimalString(itext, 8, current_mA/10, 2, 6, 3);
 
 	BSP_LCD_DisplayStringAt(fontwidth*5, LINE(1), (uint8_t*)itext, LEFT_MODE);
 	BSP_LCD_DisplayStringAt(fontwidth*13, LINE(1), (uint8_t*)"A", LEFT_MODE);
 
 	// Power
-	uint32_t power_mW = voltage_mV * current_mA / 1000;
+	uint32_t power_mW = (uint64_t) voltage_mV * current_mA / 1000;
 	char ptext[9];
-	uint32ToDecimalString(ptext, 9, power_mW, 3, 7, 4);
+	uint32ToDecimalString(ptext, 9, power_mW/10, 2, 7, 3);
 	BSP_LCD_DisplayStringAt(fontwidth*4, LINE(2), (uint8_t*)ptext, LEFT_MODE);
 	BSP_LCD_DisplayStringAt(fontwidth*13, LINE(2), (uint8_t*)"W", LEFT_MODE);
 
@@ -402,7 +408,7 @@ void DrawLiveData(void){
 	snprintf(max_stage_text, 3, "%2lu", max_temp_stage);
 
 	const int ypos_start_temp_info = 16;
-	BSP_LCD_DisplayStringAt(0, ypos_start_temp_info, (uint8_t*)"Max:", LEFT_MODE);
+	BSP_LCD_DisplayStringAt(0, ypos_start_temp_info, (uint8_t*)"MaxT:", LEFT_MODE);
 	BSP_LCD_DisplayStringAt(0, ypos_start_temp_info + 12, (uint8_t*)max_temp_text, LEFT_MODE);
 	BSP_LCD_DisplayStringAt(max_temp_text_length*fontwidth, ypos_start_temp_info+12, (uint8_t*)"C", LEFT_MODE);
 	BSP_LCD_DisplayStringAt(0, ypos_start_temp_info + 24, (uint8_t*)"Stg", LEFT_MODE);

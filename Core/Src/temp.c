@@ -119,23 +119,12 @@ static TempConversionExitStatus ReadSingleStageTemp(uint32_t stage_num, TempResu
 	ADC1->SQR3 |= ADC_TC_MUX << ADC_SQR3_SQ1_Pos;
 	ADC1->SQR1 |= (NUM_TMUX_ADC_READS - 1) << ADC_SQR1_L_Pos;
 
-
 	ADC2->SQR3 |= ADC_THERMISTOR_MUX << ADC_SQR3_SQ1_Pos;
 	ADC2->SQR1 |= (NUM_TMUX_ADC_READS - 1) << ADC_SQR1_L_Pos;
 
 	//ADC3 unused
 	ADC3->SQR3 |= ADC3_NULL << ADC_SQR3_SQ1_Pos;
 	ADC3->SQR1 |= (NUM_TMUX_ADC_READS - 1) << ADC_SQR1_L_Pos;
-
-//
-//	typedef struct {
-//		uint16_t thermocouple_adc;
-//		uint16_t thermistor_adc;
-//	} CombinedResults;
-//
-//	volatile CombinedResults results = {0};
-
-
 
 	//send SW start to ADC
 	ADC1->CR2 |= ADC_CR2_SWSTART;

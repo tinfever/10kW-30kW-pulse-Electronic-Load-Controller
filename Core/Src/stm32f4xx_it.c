@@ -189,7 +189,7 @@ void SysTick_Handler(void)
 	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
 	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
 
-	//MeasureSystemVoltageCurrent();
+	MeasureSystemVoltageCurrent();
 
 
 	//SW1 button handler

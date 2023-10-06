@@ -193,7 +193,7 @@ int main(void)
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-//  //Stop TIM4 during break while debugging
+  //Stop TIM4 during break while debugging
   DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM4_STOP;
 
 
@@ -211,10 +211,10 @@ task_list[1].period_ms = 50;
 task_list[1].enabled = true;
 
 
-//task_list[2].RunTask = LoadControl;
-//task_list[2].period_ms = 50;
-//task_list[2].enabled = true;
-//
+task_list[2].RunTask = LoadControl;
+task_list[2].period_ms = 50;
+task_list[2].enabled = true;
+
 task_list[3].RunTask = UpdateLoadStageTemps;
 task_list[3].period_ms = 500;
 task_list[3].enabled = true;

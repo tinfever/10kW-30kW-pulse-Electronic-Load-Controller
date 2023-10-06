@@ -148,10 +148,51 @@ int cmp(const void *a, const void *b){
 
 }
 
+bool StageOverpowerOK (uint32_t stage_num, uint32_t vsense_mV){
+	const LoadStageConfiguration* stage = GetPointerToSingleStageConfig(stage_num);
+	uint32_t stage_rated_power = stage->size->watt_rating;
+	uint32_t stage_mOhm = stage->size->load_mOhm;
+	uint32_t stage_nominal_conductance = stage->size->mA_per_V;
+	uint32_t stage_calibrated_conductance = GetStageCalibratedConductance(stage_num);
+
+	uint32_t stage_conductance = 0;	// mA per V
+	if (stage_calibrated_conductance |= 0){
+		stage_conductance = stage_calibrated_conductance;
+	}
+	else {
+		stage_conductance = stage_nominal_conductance;
+	}
+
+
+	// Use stage calibrated conductance to calculate current that would flow
+	// More accurate than using nominal resistance
+	uint32_t stage_estimated_current_mA = vsense_mV * stage_conductance / 1000;
+
+	// Then use that current to determine power dissipation via I^2 * R
+	uint32_t stage_estimated_power = (uint64_t) stage_estimated_current_mA * stage_estimated_current_mA * stage_mOhm / 1000 / 1000 / 1000;
+
+	if (stage_estimated_power > stage_rated_power){
+		return false;
+	}
+	else {
+		return true;
+	}
+
+}
+
 LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 
 	//Determine target conductance for specified current set point and input voltage
-	uint32_t target_conductance = 1000 * current_set_point_mA / GetVSenseAverage();	//TODO: Fix divide by zero here, probably by implementing minimum voltage check
+	//uint32_t vsense_mV = GetVSenseAverage();
+	uint32_t vsense_mV = GetVSenseLatest();
+
+	//Disable load if input voltage is too low to prevent divide by zero
+	if (vsense_mV < 2000){
+		SetSystemEnabled(false);
+		return 0;
+	}
+
+	uint32_t target_conductance = 1000 * current_set_point_mA / vsense_mV;
 
 	//Prepare array with stage number and associated conductance value, use calibrated if present or nominal if not.
 	//Not bothering to filter out empty stages now, just handle them in actual subset sum solver
@@ -182,16 +223,36 @@ LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 	for (int i = 0; i < NUM_STAGES; i++) {
 		uint32_t stage_num = load_stages_sorting[i][kStageNum];
 		uint32_t stage_conductance = load_stages_sorting[i][kStageConductance];
+		bool stage_overpower_OK = StageOverpowerOK(stage_num, vsense_mV) || (GetMode() != kConstantMode);
 		if ((stage_conductance > 0)		//Make sure stage isn't empty
 		&& ((int32_t)(remaining_conductance - stage_conductance) >= 0)	//and load stage conductance doesn't exceed remaining needed
+		&& (stage_overpower_OK)
 				) {
-			output_config |= (1 << stage_num);//Set the stage num bit to mark as enabled
+			output_config |= ((uint64_t)1 << stage_num); //Set the stage num bit to mark as enabled
 			remaining_conductance -= stage_conductance;
 		}
 
 	}
 
-	return output_config;
+	// Don't use a new stage solution if it isn't that much better than the last one, to avoid oscillation between stages due to noise
+	// Only if set point didn't change though, otherwise a new solution is needed even if error is higher
+	int32_t error = remaining_conductance;
+	static int32_t last_error = INT32_MAX;
+	static LoadStageCombo last_config = 0;
+	static uint32_t last_current_setpoint = 0;
+
+	if ((last_error - error  > 5) || (last_current_setpoint != current_set_point_mA)){	//Improvement is large enough
+		last_error = error;
+		last_config = output_config;
+		last_current_setpoint = current_set_point_mA;
+		return output_config;
+	}
+	else {
+		return last_config;
+	}
+
+
+
 
 }
 
@@ -202,7 +263,7 @@ void CalibrateAllStages(void){
 		if (GetStageNominalLoadResistance(i) != 0){
 			uint32_t cal_conductance = CalibrateSingleStage(i);
 			SetStageCalibratedConductance(i, cal_conductance);
-			HAL_Delay(1000);
+			HAL_Delay(15);
 		}
 	}
 
