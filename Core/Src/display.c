@@ -48,6 +48,7 @@ typedef struct {
 	uint32_t field_length;
 	int32_t invalid_cursor_pos;		//position to skip over with cursor. intended for decimal place. -1 means not applicable
 	bool field_visible;
+	uint32_t cursor_value_by_pos[10];
 } FieldData;
 
 typedef struct {
@@ -84,13 +85,14 @@ void Draw_Pulsed_ILow(void);
 void Draw_Pulsed_Freq(void);
 void Draw_Pulsed_DutyCycle(void);
 void DrawDynamicField(FieldName field, int xpos, int ypos, char* text);
+int32_t VelocityFactorSettingsAdjustment(uint32_t current_val, int32_t encoder_delta);
 
 
 
 FieldData field_data[kNumFieldNames] = {
-		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3, .field_visible = false},	//SetConstantCurrent
+		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3, .field_visible = false, .cursor_value_by_pos = {1000, 100, 10, 0, 1}},	//SetConstantCurrent
 		{.cursor_pos = 0, .field_length = 0, .invalid_cursor_pos = -1, .field_visible = false},	//SetMode, no specific cursor needed
-		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false}, // kSetPulsedIHigh
+		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {10000, 1000, 100, 10, 0, 1}}, // kSetPulsedIHigh
 };
 
 //initialize to default settings
@@ -286,17 +288,8 @@ void HandleRotaryEncoder(void){
 
 			case kSetConstantCurrent:
 				uint32_t present_current_setting = Get_Constant_ISet();
-
-				//use cursor position to determine amount of field to increment
-				uint32_t cursor_factor_by_position[5] = {1000, 100, 10, 0, 1};	//cursor at 0 means factor of 1000, cursor 3 is invalid, cursor 4 = 1x
-				uint32_t cursor_position = field_data[kSetConstantCurrent].cursor_pos;
-
-				//add additional velocity control
-				uint32_t velocity_factor = 1 << (abs(delta_count) / 2);
-
-				int32_t new_setting = present_current_setting + (delta_count * 100 * cursor_factor_by_position[cursor_position] * velocity_factor);	//multiply by 100 since display shows in 0.1A steps
-
-				Set_Constant_ISet(new_setting);	//additional bounds checking here
+				int32_t new_current_setting = VelocityFactorSettingsAdjustment(present_current_setting, delta_count);
+				Set_Constant_ISet(new_current_setting);	//additional bounds checking here
 				break;
 
 			case kSetMode:
@@ -306,7 +299,9 @@ void HandleRotaryEncoder(void){
 				break;
 
 			case kSetPulsedIHigh:
-
+				uint32_t present_PulsedIHigh = GetPulsedIHigh();
+				int32_t new_PulsedIHigh = VelocityFactorSettingsAdjustment(present_PulsedIHigh, delta_count);
+				SetPulsedIHigh(new_PulsedIHigh);
 				break;
 
 			default:
@@ -343,8 +338,17 @@ void HandleRotaryEncoder(void){
 
 }
 
-void VelocityFactorSettingsAdjustment(void){
+int32_t VelocityFactorSettingsAdjustment(uint32_t current_val, int32_t encoder_delta){
 
+	//use cursor position to determine amount of field to increment
+	//uint32_t cursor_factor_by_position[5] = {1000, 100, 10, 0, 1};	//cursor at 0 means factor of 1000, cursor 3 is invalid, cursor 4 = 1x
+	uint32_t cursor_position = field_data[menu_state.focused_field].cursor_pos;
+
+	//add additional velocity control
+	uint32_t velocity_factor = 1 << (abs(encoder_delta) / 2);
+
+	int32_t new_setting = current_val + (encoder_delta * 100 * field_data[menu_state.focused_field].cursor_value_by_pos[cursor_position] * velocity_factor);	//multiply by 100 since display shows in 0.1A steps
+	return new_setting;
 }
 
 void InputHandler(void){
@@ -541,7 +545,7 @@ void Draw_Pulsed_IHigh(void){
 		BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) "I High: ", LEFT_MODE);
 
 		//get setting now
-		uint32_t ihigh = 1234500 / 100;	//Convert to increments of 100mA	1234.5A
+		uint32_t ihigh = GetPulsedIHigh() / 100;	//Convert to increments of 100mA	1234.5A
 
 		char buffer[7];
 		//format for printing

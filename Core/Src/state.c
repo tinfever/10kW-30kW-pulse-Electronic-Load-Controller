@@ -197,6 +197,22 @@ void SetMode(LoadMode set){
 	}
 }
 
+uint32_t GetPulsedIHigh(void){
+	return system_config.pulsed_IHigh;
+}
+
+void SetPulsedIHigh(int32_t set){
+	if (set < 0){
+		system_config.pulsed_IHigh = 0;
+	}
+	else if (set > system_max_current_mA){
+		system_config.pulsed_IHigh = system_max_current_mA;
+	}
+	else {
+		system_config.pulsed_IHigh = set;
+	}
+}
+
 void RecordSystemCurrentMeasurement(uint32_t current_mA){
 	system_data.current_mA_buf[system_data.current_mA_buf_head] = current_mA;
 	system_data.current_mA_buf_head++;

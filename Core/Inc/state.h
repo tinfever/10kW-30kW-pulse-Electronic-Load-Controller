@@ -88,6 +88,8 @@ bool isStagePresent(uint32_t stage_num);
 uint32_t GetMaxThermocoupleTempStageNum(void);
 int32_t GetStageThermocoupleTemp(uint32_t stage_num);
 uint32_t GetVSenseLatest(void);
+uint32_t GetPulsedIHigh(void);
+void SetPulsedIHigh(int32_t set);
 
 
 #endif /* INC_STATE_H_ */
