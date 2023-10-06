@@ -239,7 +239,20 @@ uint32_t CalibrateSingleStage(uint32_t stage_num){
 
 	//configure ADC
 	//proper triple mode config already done in ADC init func.
+
+	// If we don't clear ADC2 and 3 EOC bits, the temp measurement function will start a triple simultaneous measurement
+	// but only read two values, leaving one EOC bit still set I think. Then when we don't clear that
+	// EOC bit but enable DMA here, that enables the overrun detection. The overrun detection might know
+	// that there is data in one of the ADCs from the temp measurement that wasn't ever read, and that
+	// it is overwritten by the new conversions being triggered now, thus raising an overrun fault,
+	// disabling the DMA, and causing this code to hang when waiting for the DMA to finish.
+
+	// I think the issue goes away when breakpoints are enabled and the SFR ADC3 data is opened,
+	// because that reads the ADC3 DR reg which clears the EOC bit which makes it work, unintentionally.
+
 	ADC1->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
+	ADC2->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
+	ADC3->SR = ~(ADC_SR_EOC | ADC_SR_STRT);
 
 	//setup timer trigger on ADC1 and enable
 	ADC1->CR2 &= ~(ADC_CR2_EXTEN_Msk | ADC_CR2_EXTSEL_Msk);	// Clear bits to confirm starting with zeros
@@ -407,22 +420,26 @@ void TIM4_IRQHandler(void){
 
 }
 
-void ADC_IRQHandler(void){
-
-	if (ADC1->SR & ADC_SR_OVR) {
-		ADC1->SR = ~ADC_SR_OVR;
-	}
-	if (ADC2->SR & ADC_SR_OVR) {
-		ADC2->SR = ~ADC_SR_OVR;
-	}
-	if (ADC3->SR & ADC_SR_OVR) {
-		ADC3->SR = ~ADC_SR_OVR;
-	}
-
-
-		HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
-		HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
-}
+//void ADC_IRQHandler(void){
+//
+//	while(1);
+//
+//	if (ADC1->SR & ADC_SR_OVR) {
+//		ADC1->SR = ~ADC_SR_OVR;
+//	}
+//	if (ADC2->SR & ADC_SR_OVR) {
+//		ADC2->SR = ~ADC_SR_OVR;
+//	}
+//	if (ADC3->SR & ADC_SR_OVR) {
+//		ADC3->SR = ~ADC_SR_OVR;
+//	}
+//
+//
+//		HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
+//		HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
+//
+//
+//}
 
 //void ADC1_2_IRQHandler(void){
 //
