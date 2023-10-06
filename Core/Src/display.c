@@ -37,8 +37,9 @@
 
 typedef enum {
 	kInvalidFieldName = -1,
-	kSetCurrent,
+	kSetConstantCurrent,
 	kSetMode,
+	kSetPulsedIHigh,
 	kNumFieldNames,
 } FieldName;
 
@@ -46,6 +47,7 @@ typedef struct {
 	int32_t cursor_pos;
 	uint32_t field_length;
 	int32_t invalid_cursor_pos;		//position to skip over with cursor. intended for decimal place. -1 means not applicable
+	bool field_visible;
 } FieldData;
 
 typedef struct {
@@ -86,12 +88,13 @@ void DrawDynamicField(FieldName field, int xpos, int ypos, char* text);
 
 
 FieldData field_data[kNumFieldNames] = {
-		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3},	//SetCurrent
-		{.cursor_pos = 0, .field_length = 0, .invalid_cursor_pos = -1},	//SetMode, no specific cursor needed
+		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3, .field_visible = false},	//SetConstantCurrent
+		{.cursor_pos = 0, .field_length = 0, .invalid_cursor_pos = -1, .field_visible = false},	//SetMode, no specific cursor needed
+		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false}, // kSetPulsedIHigh
 };
 
 //initialize to default settings
-static MenuState menu_state = {.focused_field = kSetCurrent, .is_selected = false};
+static MenuState menu_state = {.focused_field = kSetConstantCurrent, .is_selected = false};
 
 static struct {
 	bool sw1_press;
@@ -280,12 +283,13 @@ void HandleRotaryEncoder(void){
 	//if setting is selected, apply delta as setting change
 	if (menu_state.is_selected && delta_count){
 		switch (menu_state.focused_field){
-			case kSetCurrent:
+
+			case kSetConstantCurrent:
 				uint32_t present_current_setting = Get_Constant_ISet();
 
 				//use cursor position to determine amount of field to increment
 				uint32_t cursor_factor_by_position[5] = {1000, 100, 10, 0, 1};	//cursor at 0 means factor of 1000, cursor 3 is invalid, cursor 4 = 1x
-				uint32_t cursor_position = field_data[kSetCurrent].cursor_pos;
+				uint32_t cursor_position = field_data[kSetConstantCurrent].cursor_pos;
 
 				//add additional velocity control
 				uint32_t velocity_factor = 1 << (abs(delta_count) / 2);
@@ -293,14 +297,18 @@ void HandleRotaryEncoder(void){
 				int32_t new_setting = present_current_setting + (delta_count * 100 * cursor_factor_by_position[cursor_position] * velocity_factor);	//multiply by 100 since display shows in 0.1A steps
 
 				Set_Constant_ISet(new_setting);	//additional bounds checking here
-
-
 				break;
+
 			case kSetMode:
 				LoadMode mode = GetMode();
 				mode += delta_count;
 				SetMode(mode);
 				break;
+
+			case kSetPulsedIHigh:
+
+				break;
+
 			default:
 				break;
 		}
@@ -310,14 +318,32 @@ void HandleRotaryEncoder(void){
 		menu_state.focused_field += delta_count;
 
 		//check validity and roll over
-		if (menu_state.focused_field >= kNumFieldNames) {
-			menu_state.focused_field = 0;
+
+		//loop through fields until we find one that is visible and in a valid range
+
+		while (menu_state.focused_field < 0 || menu_state.focused_field > kNumFieldNames || field_data[menu_state.focused_field].field_visible == false){
+
+			if (menu_state.focused_field >= kNumFieldNames) {
+				menu_state.focused_field = 0;
+			}
+
+			if (menu_state.focused_field < 0) {
+				menu_state.focused_field = kNumFieldNames-1;
+			}
+
+			if (field_data[menu_state.focused_field].field_visible == false){
+				menu_state.focused_field += 1;
+			}
+
 		}
-		if (menu_state.focused_field < 0) {
-			menu_state.focused_field = kNumFieldNames-1;
-		}
+
+
 	}
 
+
+}
+
+void VelocityFactorSettingsAdjustment(void){
 
 }
 
@@ -462,10 +488,10 @@ void Draw_Constant_ISet(void) {
 	uint32ToDecimalString(buffer, 6, set_current, 1, 0, 4);
 
 	xpos = 3 * fontwidth;
-	DrawDynamicField(kSetCurrent, xpos, ypos, buffer);
+	DrawDynamicField(kSetConstantCurrent, xpos, ypos, buffer);
 
 	xpos = 8 * fontwidth;
-	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " A", LEFT_MODE);
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " A            ", LEFT_MODE);
 }
 
 void DrawDynamicField(FieldName field, int xpos, int ypos, char* text){
@@ -501,14 +527,18 @@ void DrawDynamicField(FieldName field, int xpos, int ypos, char* text){
 		BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) text,
 				LEFT_MODE);
 	}
+
+	//mark field as visible for cursor usage
+	field_data[field].field_visible = true;
 }
 
 void Draw_Pulsed_IHigh(void){
 		int fontwidth = BSP_LCD_GetFont()->Width;
 		int fontheight = BSP_LCD_GetFont()->Height;
 		int ypos = 16 + fontheight*4;
+		int xpos = 0 * fontwidth;
 
-		BSP_LCD_DisplayStringAt(0 * fontwidth, ypos, (uint8_t*) "I High:", LEFT_MODE);
+		BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) "I High: ", LEFT_MODE);
 
 		//get setting now
 		uint32_t ihigh = 1234500 / 100;	//Convert to increments of 100mA	1234.5A
@@ -516,6 +546,12 @@ void Draw_Pulsed_IHigh(void){
 		char buffer[7];
 		//format for printing
 		uint32ToDecimalString(buffer, 7, ihigh, 1, 0, 5);
+
+		xpos = 8 * fontwidth;
+		DrawDynamicField(kSetPulsedIHigh, xpos, ypos, buffer);
+
+		xpos = 14 * fontwidth;
+		BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " A      ", LEFT_MODE);
 
 
 
@@ -578,16 +614,34 @@ void DrawModeField(void){
 void DrawSettings(void){
 	BSP_LCD_SetFont(&Font12);
 
+	// mark all fields as invisible for cursor usage.
+	// Draw dynamic will automatically mark as visible again
+	// Just need to add bounds check somewhere at the end I think?
+
+	for (int i = 0; i < kNumFieldNames; i++){
+		field_data[i].field_visible = false;
+	}
+
 	//Draw the actual mode selection field
 	DrawModeField();
 
 	//Draw associated settings for selected mode
 	ModeParams *mode_params = &modes[GetMode()];
 	int num_possible_draw_functions = sizeof(mode_params->DrawSetting) / sizeof(mode_params->DrawSetting[0]);
+	int number_drawn = 0;
 	for (int i = 0; i < num_possible_draw_functions; i++){
 		if (mode_params->DrawSetting[i] != NULL){
 			mode_params->DrawSetting[i]();
+			number_drawn++;
 		}
+	}
+
+	// Clear any lines that aren't used to draw fields, so text doesn't linger from previous options
+	while(number_drawn < 4){
+			BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+			BSP_LCD_FillRect(0, 16 + 12*(4+number_drawn), 160, 12);
+			BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+		number_drawn++;
 	}
 
 	//TODO: add timeout for selection
