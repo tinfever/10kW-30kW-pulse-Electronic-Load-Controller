@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 const uint32_t system_max_current_mA = 999900;
+const uint32_t system_max_pulse_freq_Hz = 3500;
 
 const LoadStageParameters kLoadStageParamsBySize[kNumberOfStageSizes] = {	//Order corresponds to LoadStageSize enum order
 		{.load_mOhm = 8000,	.mA_per_V = 125, .watt_rating = 40, .shunt_uOhms = 16000},			//SIZE_8R
@@ -143,7 +144,7 @@ struct {
 	int32_t pulsed_IHigh;
 	int32_t pulsed_ILow;
 	int32_t pulsed_freq;
-	int32_t pulsed_dutycycle;
+	int32_t pulsed_dutycycle;	//0.01% increments
 	LoadMode set_mode;
 	bool load_enabled;
 } system_config = {0};
@@ -210,6 +211,54 @@ void SetPulsedIHigh(int32_t set){
 	}
 	else {
 		system_config.pulsed_IHigh = set;
+	}
+}
+
+uint32_t GetPulsedILow(void){
+	return system_config.pulsed_ILow;
+}
+
+void SetPulsedILow(int32_t set){
+	if (set < 0){
+		system_config.pulsed_ILow = 0;
+	}
+	else if (set > system_max_current_mA){
+		system_config.pulsed_ILow = system_max_current_mA;
+	}
+	else {
+		system_config.pulsed_ILow = set;
+	}
+}
+
+uint32_t GetPulsedFreq(void){
+	return system_config.pulsed_freq;
+}
+
+void SetPulsedFreq(int32_t set){
+	if (set < 0){
+		system_config.pulsed_freq = 0;
+	}
+	else if (set > system_max_pulse_freq_Hz){
+		system_config.pulsed_freq = system_max_pulse_freq_Hz;
+	}
+	else {
+		system_config.pulsed_freq = set;
+	}
+}
+
+uint32_t GetPulsedDutyCycle(void){
+	return system_config.pulsed_dutycycle;
+}
+
+void SetPulsedDutyCycle(int32_t set){
+	if (set < 0){
+		system_config.pulsed_dutycycle = 0;
+	}
+	else if (set > 9999){
+		system_config.pulsed_dutycycle = 9999;
+	}
+	else {
+		system_config.pulsed_dutycycle = set;
 	}
 }
 

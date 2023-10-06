@@ -90,6 +90,12 @@ int32_t GetStageThermocoupleTemp(uint32_t stage_num);
 uint32_t GetVSenseLatest(void);
 uint32_t GetPulsedIHigh(void);
 void SetPulsedIHigh(int32_t set);
+uint32_t GetPulsedILow(void);
+void SetPulsedILow(int32_t set);
+uint32_t GetPulsedFreq(void);
+void SetPulsedFreq(int32_t set);
+uint32_t GetPulsedDutyCycle(void);
+void SetPulsedDutyCycle(int32_t set);
 
 
 #endif /* INC_STATE_H_ */

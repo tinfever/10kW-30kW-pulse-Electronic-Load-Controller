@@ -40,6 +40,9 @@ typedef enum {
 	kSetConstantCurrent,
 	kSetMode,
 	kSetPulsedIHigh,
+	kSetPulsedILow,
+	kSetPulsedFreq,
+	kSetPulsedDutyCycle,
 	kNumFieldNames,
 } FieldName;
 
@@ -90,9 +93,12 @@ int32_t VelocityFactorSettingsAdjustment(uint32_t current_val, int32_t encoder_d
 
 
 FieldData field_data[kNumFieldNames] = {
-		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3, .field_visible = false, .cursor_value_by_pos = {1000, 100, 10, 0, 1}},	//SetConstantCurrent
+		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3, .field_visible = false, .cursor_value_by_pos = {100000, 10000, 1000, 0, 100}},	//SetConstantCurrent
 		{.cursor_pos = 0, .field_length = 0, .invalid_cursor_pos = -1, .field_visible = false},	//SetMode, no specific cursor needed
-		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {10000, 1000, 100, 10, 0, 1}}, // kSetPulsedIHigh
+		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {1000000, 100000, 10000, 1000, 0, 100}}, // kSetPulsedIHigh
+		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {1000000, 100000, 10000, 1000, 0, 100}}, // kSetPulsedILow
+		{.cursor_pos = 3, .field_length = 3, .invalid_cursor_pos = -1, .field_visible = false, .cursor_value_by_pos = {1000, 100, 10, 1}}, // kSetPulsedFreq
+		{.cursor_pos = 1, .field_length = 4, .invalid_cursor_pos = 2, .field_visible = false, .cursor_value_by_pos = {1000, 100, 0, 10, 1}}, // kSetPulsedDutyCycle
 };
 
 //initialize to default settings
@@ -304,6 +310,21 @@ void HandleRotaryEncoder(void){
 				SetPulsedIHigh(new_PulsedIHigh);
 				break;
 
+			case kSetPulsedILow:
+				int32_t new_PulsedILow = VelocityFactorSettingsAdjustment(GetPulsedILow(), delta_count);
+				SetPulsedILow(new_PulsedILow);
+				break;
+
+			case kSetPulsedFreq:
+				int32_t new_PulsedFreq = VelocityFactorSettingsAdjustment(GetPulsedFreq(), delta_count);
+				SetPulsedFreq(new_PulsedFreq);
+				break;
+
+			case kSetPulsedDutyCycle:
+				int32_t new_PulsedDutyCycle = VelocityFactorSettingsAdjustment(GetPulsedDutyCycle(), delta_count);
+				SetPulsedDutyCycle(new_PulsedDutyCycle);
+				break;
+
 			default:
 				break;
 		}
@@ -347,7 +368,7 @@ int32_t VelocityFactorSettingsAdjustment(uint32_t current_val, int32_t encoder_d
 	//add additional velocity control
 	uint32_t velocity_factor = 1 << (abs(encoder_delta) / 2);
 
-	int32_t new_setting = current_val + (encoder_delta * 100 * field_data[menu_state.focused_field].cursor_value_by_pos[cursor_position] * velocity_factor);	//multiply by 100 since display shows in 0.1A steps
+	int32_t new_setting = current_val + (encoder_delta * field_data[menu_state.focused_field].cursor_value_by_pos[cursor_position] * velocity_factor);
 	return new_setting;
 }
 
@@ -562,15 +583,70 @@ void Draw_Pulsed_IHigh(void){
 }
 
 void Draw_Pulsed_ILow(void){
+	int fontwidth = BSP_LCD_GetFont()->Width;
+	int fontheight = BSP_LCD_GetFont()->Height;
+	int ypos = 16 + fontheight*5;
+	int xpos = 0 * fontwidth;
 
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) "I Low:  ", LEFT_MODE);
+
+	//get setting now
+	uint32_t ilow = GetPulsedILow() / 100;	//Convert to increments of 100mA	1234.5A
+
+	char buffer[7];
+	//format for printing
+	uint32ToDecimalString(buffer, 7, ilow, 1, 0, 5);
+
+	xpos = 8 * fontwidth;
+	DrawDynamicField(kSetPulsedILow, xpos, ypos, buffer);
+
+	xpos = 14 * fontwidth;
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " A      ", LEFT_MODE);
 }
 
 void Draw_Pulsed_Freq(void){
+	int fontwidth = BSP_LCD_GetFont()->Width;
+	int fontheight = BSP_LCD_GetFont()->Height;
+	int ypos = 16 + fontheight*6;
+	int xpos = 0 * fontwidth;
 
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) "Frequency: ", LEFT_MODE);
+
+	//get setting now
+	uint32_t freq = GetPulsedFreq();
+
+	char buffer[5];
+	//format for printing
+	//uint32ToDecimalString(buffer, 7, ihigh, 1, 0, 5);
+	snprintf(buffer, 5, "%.4lu", freq);
+
+	xpos = 11 * fontwidth;
+	DrawDynamicField(kSetPulsedFreq, xpos, ypos, buffer);
+
+	xpos = 15 * fontwidth;
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " Hz    ", LEFT_MODE);
 }
 
 void Draw_Pulsed_DutyCycle(void){
+	int fontwidth = BSP_LCD_GetFont()->Width;
+	int fontheight = BSP_LCD_GetFont()->Height;
+	int ypos = 16 + fontheight*7;
+	int xpos = 0 * fontwidth;
 
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) "Duty Cycle: ", LEFT_MODE);
+
+	//get setting now
+	uint32_t dutycycle = GetPulsedDutyCycle();
+
+	char buffer[6];
+	//format for printing
+	uint32ToDecimalString(buffer, 6, dutycycle, 2, 0, 4);
+
+	xpos = 12 * fontwidth;
+	DrawDynamicField(kSetPulsedDutyCycle, xpos, ypos, buffer);
+
+	xpos = 17 * fontwidth;
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " %   ", LEFT_MODE);
 }
 
 void DrawModeField(void){
