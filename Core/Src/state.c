@@ -10,6 +10,8 @@
 const uint32_t system_max_current_mA = 3000000;	// 3000A
 const uint32_t system_max_pulse_freq_Hz = 3500;
 
+LoadStageCombo LatestStageCombo = 0;
+
 const LoadStageParameters kLoadStageParamsBySize[kNumberOfStageSizes] = {	//Order corresponds to LoadStageSize enum order
 		{.load_mOhm = 8000,	.mA_per_V = 125, .watt_rating = 40, .shunt_uOhms = 16000},			//SIZE_8R
 		{.load_mOhm = 4000,	.mA_per_V = 250, .watt_rating = 50, .shunt_uOhms = 8000},			//SIZE_4R
@@ -381,4 +383,42 @@ uint32_t GetMaxThermocoupleTempStageNum(void){
 		}
 	}
 	return max_stage;
+}
+
+void SetSingleStageCurrent(uint32_t stage_num, uint32_t current_mA){
+	load_stage_data[stage_num].current_mA = current_mA;
+}
+
+uint32_t GetSingleStageCurrent(uint32_t stage_num){
+	return load_stage_data[stage_num].current_mA;
+}
+
+void SetLatestStageCombo(LoadStageCombo input){
+	LatestStageCombo = input;
+}
+
+bool IsStageEnabled(uint32_t stage_num){
+	bool result = LatestStageCombo & ((uint64_t)1 << stage_num);
+	return result;
+}
+
+uint32_t CalcSelectiveCurrentSum(void){
+	uint32_t sum = 0;
+	for (int i = 0; i < NUM_STAGES; i++){
+		if (IsStageEnabled(i)){
+			LiveCalibrateSingleStageCurrent(i);
+			sum += GetSingleStageCurrent(i);
+		}
+	}
+	return sum;
+}
+
+uint32_t GetConductanceNow(void){
+	uint32_t sum = 0;
+	for (int i = 0; i < NUM_STAGES; i++){
+		if (IsStageEnabled(i)){
+			sum += load_stage_data[i].calibrated_mA_per_V;
+		}
+	}
+	return sum;
 }

@@ -15,6 +15,7 @@ void SetupInjectedDualADCReadForIRQ(void);
 uint32_t ConvertVsenseADCtomV(uint32_t adc_count);
 uint32_t ConvertStageCurrentADCtomA(uint32_t adc_count, uint32_t shunt_uOhms);
 void ADCInit(void);
+void LiveCalibrateSingleStageCurrent(uint32_t stage_num);
 
 #endif /* INC_ADC_H_ */
 

@@ -113,6 +113,9 @@ static TempConversionExitStatus ReadSingleStageTemp(uint32_t stage_num, TempResu
 	ADC2->SQR1 = 0;
 	ADC2->SQR2 = 0;
 	ADC2->SQR3 = 0;
+	ADC3->SQR1 = 0;
+	ADC3->SQR2 = 0;
+	ADC3->SQR3 = 0;
 
 	#define NUM_TMUX_ADC_READS 1
 	//configure channels ADC1 = Thermocouple mux, ADC2 = Thermistor mux

@@ -176,6 +176,8 @@ void UpdateSineWaveOutput(void){
 
 void StageControl(LoadStageCombo state){
 
+	SetLatestStageCombo(state);
+
 	//Precalculate each IO port pins to enable and disable
 	uint32_t port_d = 0;
 	uint32_t port_e = 0;
@@ -379,13 +381,15 @@ LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 
 	// Don't use a new stage solution if it isn't that much better than the last one, to avoid oscillation between stages due to noise
 	// Only if set point didn't change though, otherwise a new solution is needed even if error is higher
-	int32_t error = remaining_conductance;
-	static int32_t last_error = INT32_MAX;
+	int32_t proposed_error = remaining_conductance;
+	//static int32_t last_error = INT32_MAX;
 	static LoadStageCombo last_config = 0;
 	static uint32_t last_target_conductance = 0;
 
-	if ((last_error - error  > 10) || abs(((int32_t)last_target_conductance - target_conductance)) > 10 || !last_enabled){	//Improvement is large enough, target conductance changed enough, or transitioning to on
-		last_error = error;
+	int32_t current_error = target_conductance - GetConductanceNow();
+
+	if ((current_error - proposed_error  > 10) || abs(((int32_t)last_target_conductance - target_conductance)) > 10 || !last_enabled){	//Improvement is large enough, target conductance changed enough, or transitioning to on
+
 		last_config = output_config;
 		last_target_conductance = target_conductance;
 #ifdef DEBUG_PRINT

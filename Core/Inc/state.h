@@ -97,7 +97,12 @@ void SetPulsedFreq(int32_t set);
 uint32_t GetPulsedDutyCycle(void);
 void SetPulsedDutyCycle(int32_t set);
 uint32_t GetVSenseAverageOverLength(uint32_t length);
-
+void SetSingleStageCurrent(uint32_t stage_num, uint32_t current_mA);
+uint32_t GetSingleStageCurrent(uint32_t stage_num);
+void SetLatestStageCombo(LoadStageCombo input);
+bool IsStageEnabled(uint32_t stage_num);
+uint32_t CalcSelectiveCurrentSum(void);
+uint32_t GetConductanceNow(void);
 
 #endif /* INC_STATE_H_ */
 

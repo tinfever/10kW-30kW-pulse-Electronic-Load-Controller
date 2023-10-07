@@ -409,6 +409,15 @@ void InputHandler(void){
 
 
 void DrawLiveData(void){
+
+	// Temporarily location
+	uint32_t selective_sum_mA = 0;
+	if (GetSystemEnabled() && GetMode() == kConstantMode){
+		selective_sum_mA = CalcSelectiveCurrentSum();
+	}
+
+
+
 	BSP_LCD_SetFont(&Font16);
 	int fontwidth = BSP_LCD_GetFont()->Width;
 
@@ -422,7 +431,14 @@ void DrawLiveData(void){
 
 
 	// Current
-	uint32_t current_mA = GetISenseAverage();
+	uint32_t current_mA = 0;
+	if (GetMode() == kConstantMode){
+		current_mA = selective_sum_mA;
+	}
+	else {
+		current_mA = GetISenseAverage();
+	}
+
 	char itext[8];
 	uint32ToDecimalString(itext, 8, current_mA/10, 2, 6, 3);
 
@@ -731,6 +747,8 @@ void DrawSettings(void){
 void DisplayUpdate(){
 //	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
 //	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+
+
 
 	InputHandler();
 
