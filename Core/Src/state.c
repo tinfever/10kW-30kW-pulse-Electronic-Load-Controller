@@ -235,8 +235,8 @@ uint32_t GetPulsedFreq(void){
 }
 
 void SetPulsedFreq(int32_t set){
-	if (set < 0){
-		system_config.pulsed_freq = 0;
+	if (set < 1){
+		system_config.pulsed_freq = 1;
 	}
 	else if (set > system_max_pulse_freq_Hz){
 		system_config.pulsed_freq = system_max_pulse_freq_Hz;

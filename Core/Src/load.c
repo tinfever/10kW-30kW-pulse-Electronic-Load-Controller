@@ -21,12 +21,16 @@ static const LoadStageConfiguration* stage_being_calibrated = 0;
 static uint32_t sinewave[20];
 static const uint32_t sinewave_size = 20;
 
+static LoadStageCombo pulse_high_combo = 0;
+static LoadStageCombo pulse_low_combo = 0;
 
-extern TIM_HandleTypeDef htim5;
 
 void StageControl(LoadStageCombo state);
 void GenerateSineData(uint32_t current_mA);
 void UpdateSineWaveOutput(void);
+void EnablePulseLoad(void);
+void DisablePulseLoad(void);
+void UpdatePulseLoad(void);
 
 
 //checks system_config data and enables/disables load accordingly, enables/disables correct stages to regulate
@@ -43,19 +47,113 @@ void LoadControl(void){
 		GenerateSineData(set_current);
 	}
 
+	if (now_enabled && !last_enabled && mode == kPulsedMode){
+		EnablePulseLoad();
+	}
+
 	if (now_enabled && mode == kSineWaveMode){
 		UpdateSineWaveOutput();
 	}
-	else if (now_enabled && mode != kSineWaveMode){
+	else if (now_enabled && mode == kConstantMode){
 		//get stages to enable
 		LoadStageCombo stagebits = StageComboSelect(set_current);
 		StageControl(stagebits);
 	}
+	else if (now_enabled && mode == kPulsedMode){
+		UpdatePulseLoad();
+	}
 	else {
 		StageControl(0);
+		DisablePulseLoad();	//Fix this later
 	}
 
 	last_enabled = now_enabled;
+
+	// MOnitor if there is a change of enablement or mode
+
+	//if mode changes, disable load and cleanup from last mode?
+
+
+}
+
+void EnablePulseLoad(void){
+	// If this function called is on each LoadUpdate task call, StageComboSelect will use latest voltage which might have been taken when pulse was high or low or alternating.
+	// This might cause fluctuation in pulse levels
+	// Ideally we'd sample voltage during high and low periods and use those to determine high and low stage solutions respectively.
+
+	// Configure timer for correct frequency and duty cycle, and to fire IRQ for pulse high and pulse low.
+	// Using TIM2, 32-bit
+	// APB1 timer clock 84Mhz
+
+	// Frequency range from 1 - 3500 Hz
+	// Period range from 1s to 285.7us
+	// clock cycle period range from 84E6 to 24000
+
+	//Prescaler will be 0, since cycle period range will fit within 32-bit timer
+
+
+	//Enable clock
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+	TIM2->CR1 &= ~TIM_CR1_CEN;	//Disable, just in case
+
+	TIM2->SR = 0;	//Clear status
+
+	//TIM2->CR1 |= TIM_CR1_ARPE;	//Enable ARR buffer
+
+	// Enable Update and CC1 IRQ
+	TIM2->DIER |= TIM_DIER_UIE | TIM_DIER_CC1IE;
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	UpdatePulseLoad();
+
+	TIM2->CR1 |= TIM_CR1_CEN;	//Enable timer
+}
+
+void UpdatePulseLoad(void){
+	// calculate stage combos for high and low levels
+	uint32_t pulse_high_current = GetPulsedIHigh();
+	pulse_high_combo = StageComboSelect(pulse_high_current);
+
+	uint32_t pulse_low_current = GetPulsedILow();
+	pulse_low_combo = StageComboSelect(pulse_low_current);
+
+	uint32_t freq = GetPulsedFreq();
+	uint32_t arr = 84000000/freq;
+	TIM2->ARR = arr - 1;
+
+	uint32_t dutycycle = GetPulsedDutyCycle();
+	uint32_t cc1 = arr - ((uint64_t)dutycycle * arr / 10000) - 1;	// Divide by 10000 to convert from dutycycle where 9999 = 99.99%.
+	TIM2->CCR1 = cc1;
+
+	if (TIM2->CNT > TIM2->ARR){
+		TIM2->EGR |= TIM_EGR_UG;
+	}
+
+}
+
+void TIM2_IRQHandler(void){
+	if (TIM2->SR & TIM_SR_CC1IF){	//pulse high
+		TIM2->SR = ~TIM_SR_CC1IF;
+		StageControl(pulse_high_combo);
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+		HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
+	}
+
+	else if (TIM2->SR & TIM_SR_UIF){	//pulse low
+		TIM2->SR = ~TIM_SR_UIF;
+		StageControl(pulse_low_combo);
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+		HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
+	}
+
+}
+
+void DisablePulseLoad(void){
+	TIM2->CR1 &= ~TIM_CR1_CEN;	// Disable timer
+	StageControl(0); // Turn off all stages
+	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
 }
 
 void GenerateSineData(uint32_t current_mA){
@@ -75,55 +173,50 @@ void UpdateSineWaveOutput(void){
 }
 
 void StageControl(LoadStageCombo state){
+
+	//Precalculate each IO port pins to enable and disable
+	uint32_t port_d = 0;
+	uint32_t port_e = 0;
+	uint32_t port_g = 0;
+	uint32_t port_i = 0;
+	uint32_t port_k = 0;
+
 	for (int i = 0; i < NUM_STAGES; i++){
 		bool stage_i_enabled = (state >> i) & 1;
 		const LoadStageConfiguration *stage = GetPointerToSingleStageConfig(i);
-		HAL_GPIO_WritePin(stage->io_port, stage->io_pin, stage_i_enabled);
+		//HAL_GPIO_WritePin(stage->io_port, stage->io_pin, stage_i_enabled);
+		//uint32_t io_port = stage->io_port;
+		switch((uint32_t)stage->io_port){
+		case (uint32_t)GPIOD:
+			port_d |= stage->io_pin << (16*!stage_i_enabled);
+			break;
+		case (uint32_t)GPIOE:
+			port_e |= stage->io_pin << (16*!stage_i_enabled);
+			break;
+		case (uint32_t)GPIOG:
+			port_g |= stage->io_pin << (16*!stage_i_enabled);
+			break;
+		case (uint32_t)GPIOI:
+			port_i |= stage->io_pin << (16*!stage_i_enabled);
+			break;
+		case (uint32_t)GPIOK:
+			port_k |= stage->io_pin << (16*!stage_i_enabled);
+			break;
+		default:
+			while(1);
+			break;
+		}
 	}
-}
 
-void sequenceOn(void){
-//	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 1);
-//	for (int i = 0; i < 8; i++){
-//		int stage_id = stages_to_enable[i];
-//		if (stage_id != -1){
-//			HAL_GPIO_WritePin(Stage[stage_id].GPIOx, Stage[stage_id].GPIO_Pin, 1);
-//		}
-//		else {
-//			break;
-//		}
-//
-//	}
+	//Quickly set all the IO pins
+	GPIOD->BSRR = port_d;
+	GPIOE->BSRR = port_e;
+	GPIOG->BSRR = port_g;
+	GPIOI->BSRR = port_i;
+	GPIOK->BSRR = port_k;
 
 }
 
-void sequenceOff(void){
-//	HAL_GPIO_WritePin(IO2_GPIO_Port, IO2_Pin, 0);
-//
-//	for (int i = 0; i < 8; i++){
-//		int stage_id = stages_to_enable[i];
-//		if (stage_id != -1){
-//			HAL_GPIO_WritePin(Stage[stage_id].GPIOx, Stage[stage_id].GPIO_Pin, 0);
-//		}
-//		else {
-//			break;
-//		}
-//
-//	}
-}
-
-
-void enableLoad(void){
-	// TODO: Confirm HAL starts timer counter at 0
-	HAL_TIM_OC_Start_IT(&htim5, TIM_CHANNEL_3);
-	HAL_TIM_OC_Start_IT(&htim5, TIM_CHANNEL_4);
-}
-
-void disableLoad(void){
-	HAL_TIM_OC_Stop_IT(&htim5, TIM_CHANNEL_3);
-	HAL_TIM_OC_Stop_IT(&htim5, TIM_CHANNEL_4);
-	sequenceOff();
-}
 
 enum {
 		kStageNum = 0,

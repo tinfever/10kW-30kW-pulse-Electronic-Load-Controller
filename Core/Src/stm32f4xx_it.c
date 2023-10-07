@@ -186,8 +186,8 @@ void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
-	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
-	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
+//	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 1);
+//	HAL_GPIO_WritePin(IO1_GPIO_Port, IO1_Pin, 0);
 
 	MeasureSystemVoltageCurrent();
 

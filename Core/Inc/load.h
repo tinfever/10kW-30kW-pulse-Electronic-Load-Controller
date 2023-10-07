@@ -8,10 +8,7 @@
 #ifndef INC_LOAD_H_
 #define INC_LOAD_H_
 
-void sequenceOn(void);
-void sequenceOff(void);
-void enableLoad(void);
-void disableLoad(void);
+
 void LoadControl(void);
 
 uint32_t CalibrateSingleStage(uint32_t stage_num);

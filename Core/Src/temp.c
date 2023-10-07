@@ -391,5 +391,5 @@ void FanSpeedControl(void){
 	}
 
 
-	__HAL_TIM_SET_COMPARE(&FAN_PWM_TIM, TIM_CHANNEL_4, pwm_compare_val);
+	__HAL_TIM_SET_COMPARE(&FAN_PWM_TIM, TIM_CHANNEL_1, pwm_compare_val);
 }

@@ -62,6 +62,11 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 
+//Notes:
+// TIM3 - Encoder
+// TIM11 - Fan PWM
+// TIM4 - ADC read during calibration pulse, could be re-used elsewhere
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -187,7 +192,7 @@ int main(void)
 
   //start PWM fan control
   //default fan speed is 30%
-//  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
 
   //start debug cycle counter
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -195,6 +200,7 @@ int main(void)
 
   //Stop TIM4 during break while debugging
   DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM4_STOP;
+  DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM2_STOP;
 
 
 #define NUM_TASKS 10
@@ -218,10 +224,10 @@ task_list[2].enabled = true;
 task_list[3].RunTask = UpdateLoadStageTemps;
 task_list[3].period_ms = 500;
 task_list[3].enabled = true;
-//
-//task_list[4].RunTask = FanSpeedControl;
-//task_list[4].period_ms = 500;
-//task_list[4].enabled = true;
+
+task_list[4].RunTask = FanSpeedControl;
+task_list[4].period_ms = 500;
+task_list[4].enabled = true;
 
 task_list[5].RunTask = IO1_blink;
 task_list[5].period_ms = 500;
@@ -548,9 +554,9 @@ static void MX_TIM11_Init(void)
 
   /* USER CODE END TIM11_Init 1 */
   htim11.Instance = TIM11;
-  htim11.Init.Prescaler = 0;
+  htim11.Init.Prescaler = 1679;
   htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim11.Init.Period = 65535;
+  htim11.Init.Period = 999;
   htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
@@ -561,8 +567,8 @@ static void MX_TIM11_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.OCMode = TIM_OCMODE_PWM2;
+  sConfigOC.Pulse = 300;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim11, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
