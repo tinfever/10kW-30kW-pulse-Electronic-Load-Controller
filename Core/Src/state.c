@@ -7,7 +7,7 @@
 #include "state.h"
 #include <stdbool.h>
 
-const uint32_t system_max_current_mA = 999900;
+const uint32_t system_max_current_mA = 3000000;	// 3000A
 const uint32_t system_max_pulse_freq_Hz = 3500;
 
 const LoadStageParameters kLoadStageParamsBySize[kNumberOfStageSizes] = {	//Order corresponds to LoadStageSize enum order
@@ -299,6 +299,33 @@ uint32_t GetVSenseLatest(void){
 		location = system_data.voltage_mV_buf_size - 1;
 	}
 	return system_data.voltage_mV_buf[location];
+}
+
+uint32_t GetVSenseAverageOverLength(uint32_t length){
+
+	int location = system_data.voltage_mV_buf_head - 1;
+	if (location < 0){
+		location = system_data.voltage_mV_buf_size - 1;
+	}
+
+	// Add bounds checking for length, max is buf size
+	if (length > system_data.voltage_mV_buf_size){
+		length = system_data.voltage_mV_buf_size;
+	}
+
+	uint32_t sum = 0;
+	for (int i = 0; i < length; i++){
+		sum += system_data.voltage_mV_buf[location];
+		location--;
+		if (location < 0){
+			location = system_data.voltage_mV_buf_size - 1;
+		}
+
+	}
+
+	uint32_t result = sum / length;
+
+	return result;
 }
 
 uint32_t GetISenseAverage(void){

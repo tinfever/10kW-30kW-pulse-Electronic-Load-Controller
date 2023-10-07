@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-//#include <stdio.h>
+#include <stdio.h>
 //#include <string.h>
 #include <math.h>
 
@@ -33,10 +33,12 @@ void DisablePulseLoad(void);
 void UpdatePulseLoad(void);
 
 
+static bool last_enabled = false;
+
 //checks system_config data and enables/disables load accordingly, enables/disables correct stages to regulate
 void LoadControl(void){
 
-	static bool last_enabled = false;
+
 
 	uint32_t set_current = Get_Constant_ISet();
 	LoadMode mode = GetMode();
@@ -181,6 +183,21 @@ void StageControl(LoadStageCombo state){
 	uint32_t port_i = 0;
 	uint32_t port_k = 0;
 
+#ifdef DEBUG_PRINT
+	//print debug info of each stage that is enabled whenever it changes
+	static LoadStageCombo last_state = 0;
+	bool is_new_state = false;
+
+	if (state != last_state){
+		is_new_state = true;
+	}
+	last_state = state;
+
+	if (is_new_state){
+		printf("Stages enabled: ");
+	}
+#endif
+
 	for (int i = 0; i < NUM_STAGES; i++){
 		bool stage_i_enabled = (state >> i) & 1;
 		const LoadStageConfiguration *stage = GetPointerToSingleStageConfig(i);
@@ -206,7 +223,22 @@ void StageControl(LoadStageCombo state){
 			while(1);
 			break;
 		}
+
+#ifdef DEBUG_PRINT
+		if (is_new_state && stage_i_enabled){
+			printf("%d, ", i);
+		}
+#endif
+
 	}
+
+#ifdef DEBUG_PRINT
+	if (is_new_state){
+		printf("\n");
+	}
+#endif
+
+
 
 	//Quickly set all the IO pins
 	GPIOD->BSRR = port_d;
@@ -277,7 +309,8 @@ LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 
 	//Determine target conductance for specified current set point and input voltage
 	//uint32_t vsense_mV = GetVSenseAverage();
-	uint32_t vsense_mV = GetVSenseLatest();
+	//uint32_t vsense_mV = GetVSenseLatest();
+	uint32_t vsense_mV = GetVSenseAverageOverLength(10);
 
 	//Disable load if input voltage is too low to prevent divide by zero
 	if (vsense_mV < 2000){
@@ -313,6 +346,11 @@ LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 	LoadStageCombo output_config = 0;
 	uint32_t remaining_conductance = target_conductance;
 
+#ifdef DEBUG_PRINT
+	int selected[NUM_STAGES+1] = {0};
+	int selected_index = 0;
+#endif
+
 	for (int i = 0; i < NUM_STAGES; i++) {
 		uint32_t stage_num = load_stages_sorting[i][kStageNum];
 		uint32_t stage_conductance = load_stages_sorting[i][kStageConductance];
@@ -323,21 +361,46 @@ LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 				) {
 			output_config |= ((uint64_t)1 << stage_num); //Set the stage num bit to mark as enabled
 			remaining_conductance -= stage_conductance;
+
+#ifdef DEBUG_PRINT
+		selected[selected_index] = i;
+		selected_index++;
+#endif
+
 		}
 
 	}
+
+#ifdef DEBUG_PRINT
+		selected[selected_index] = -1;
+#endif
+
+
 
 	// Don't use a new stage solution if it isn't that much better than the last one, to avoid oscillation between stages due to noise
 	// Only if set point didn't change though, otherwise a new solution is needed even if error is higher
 	int32_t error = remaining_conductance;
 	static int32_t last_error = INT32_MAX;
 	static LoadStageCombo last_config = 0;
-	static uint32_t last_current_setpoint = 0;
+	static uint32_t last_target_conductance = 0;
 
-	if ((last_error - error  > 5) || (last_current_setpoint != current_set_point_mA)){	//Improvement is large enough
+	if ((last_error - error  > 10) || abs(((int32_t)last_target_conductance - target_conductance)) > 10 || !last_enabled){	//Improvement is large enough, target conductance changed enough, or transitioning to on
 		last_error = error;
 		last_config = output_config;
-		last_current_setpoint = current_set_point_mA;
+		last_target_conductance = target_conductance;
+#ifdef DEBUG_PRINT
+		printf("New Target Conductance: %lu, Target Current: %lu, Vsense: %lu\n", target_conductance, current_set_point_mA, vsense_mV);
+		printf("Conductance(stage_num) = ");
+		int i=0;
+		int sum = 0;
+		while (i < NUM_STAGES && selected[i] != -1){
+			int pos = selected[i];
+			printf("%lu(%lu) + ", load_stages_sorting[pos][kStageConductance], load_stages_sorting[pos][kStageNum]);
+			i++;
+			sum += load_stages_sorting[pos][kStageConductance];
+		}
+		printf(" = %d\n", sum);
+#endif
 		return output_config;
 	}
 	else {

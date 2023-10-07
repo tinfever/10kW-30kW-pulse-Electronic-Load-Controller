@@ -93,7 +93,7 @@ int32_t VelocityFactorSettingsAdjustment(uint32_t current_val, int32_t encoder_d
 
 
 FieldData field_data[kNumFieldNames] = {
-		{.cursor_pos = 2, .field_length = 4, .invalid_cursor_pos = 3, .field_visible = false, .cursor_value_by_pos = {100000, 10000, 1000, 0, 100}},	//SetConstantCurrent
+		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {1000000, 100000, 10000, 1000, 0, 100}},	//SetConstantCurrent
 		{.cursor_pos = 0, .field_length = 0, .invalid_cursor_pos = -1, .field_visible = false},	//SetMode, no specific cursor needed
 		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {1000000, 100000, 10000, 1000, 0, 100}}, // kSetPulsedIHigh
 		{.cursor_pos = 3, .field_length = 5, .invalid_cursor_pos = 4, .field_visible = false, .cursor_value_by_pos = {1000000, 100000, 10000, 1000, 0, 100}}, // kSetPulsedILow
@@ -509,14 +509,14 @@ void Draw_Constant_ISet(void) {
 	uint32_t set_current = Get_Constant_ISet() / 100;//convert to increments of 100mA for display 123.4
 
 	//format for printing
-	char buffer[6];
-	uint32ToDecimalString(buffer, 6, set_current, 1, 0, 4);
+	char buffer[7];
+	uint32ToDecimalString(buffer, 7, set_current, 1, 0, 5);
 
 	xpos = 3 * fontwidth;
 	DrawDynamicField(kSetConstantCurrent, xpos, ypos, buffer);
 
-	xpos = 8 * fontwidth;
-	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " A            ", LEFT_MODE);
+	xpos = 9 * fontwidth;
+	BSP_LCD_DisplayStringAt(xpos, ypos, (uint8_t*) " A           ", LEFT_MODE);
 }
 
 void DrawDynamicField(FieldName field, int xpos, int ypos, char* text){

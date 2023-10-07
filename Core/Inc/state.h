@@ -96,6 +96,7 @@ uint32_t GetPulsedFreq(void);
 void SetPulsedFreq(int32_t set);
 uint32_t GetPulsedDutyCycle(void);
 void SetPulsedDutyCycle(int32_t set);
+uint32_t GetVSenseAverageOverLength(uint32_t length);
 
 
 #endif /* INC_STATE_H_ */
