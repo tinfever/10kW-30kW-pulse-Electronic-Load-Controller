@@ -118,7 +118,7 @@ static struct {
 ModeParams modes[kNumModes] = {
 		{.label = "Constant Current", .DrawSetting = {Draw_Constant_ISet}},	// Constant Mode
 		{.label = "Pulsed          ", .DrawSetting = {Draw_Pulsed_IHigh, Draw_Pulsed_ILow, Draw_Pulsed_Freq, Draw_Pulsed_DutyCycle}}, // Pulsed Mode
-		{.label = "Sine Wave       "},	// Sinewave Mode
+		{.label = "Sine Demo       ", .DrawSetting = {Draw_Constant_ISet}}	// Sinewave Mode
 };
 
 //typedef enum {

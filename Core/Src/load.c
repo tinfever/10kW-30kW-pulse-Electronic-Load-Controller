@@ -18,8 +18,8 @@
 
 
 static const LoadStageConfiguration* stage_being_calibrated = 0;
-static uint32_t sinewave[20];
-static const uint32_t sinewave_size = 20;
+static uint32_t sinewave[256];
+static const uint32_t sinewave_size = 256;
 
 static LoadStageCombo pulse_high_combo = 0;
 static LoadStageCombo pulse_low_combo = 0;
@@ -54,7 +54,7 @@ void LoadControl(void){
 	}
 
 	if (now_enabled && mode == kSineWaveMode){
-		UpdateSineWaveOutput();
+		//UpdateSineWaveOutput();	//Now handled in SysTick IRQ
 	}
 	else if (now_enabled && mode == kConstantMode){
 		//get stages to enable
@@ -354,7 +354,7 @@ LoadStageCombo StageComboSelect(uint32_t current_set_point_mA){
 	for (int i = 0; i < NUM_STAGES; i++) {
 		uint32_t stage_num = load_stages_sorting[i][kStageNum];
 		uint32_t stage_conductance = load_stages_sorting[i][kStageConductance];
-		bool stage_overpower_OK = StageOverpowerOK(stage_num, vsense_mV) || (GetMode() != kConstantMode);
+		bool stage_overpower_OK = StageOverpowerOK(stage_num, vsense_mV) || (GetMode() == kPulsedMode);
 		if ((stage_conductance > 0)		//Make sure stage isn't empty
 		&& ((int32_t)(remaining_conductance - stage_conductance) >= 0)	//and load stage conductance doesn't exceed remaining needed
 		&& (stage_overpower_OK)

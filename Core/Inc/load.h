@@ -14,6 +14,7 @@ void LoadControl(void);
 uint32_t CalibrateSingleStage(uint32_t stage_num);
 void CalibrateAllStages(void);
 LoadStageCombo StageComboSelect(uint32_t current_set_point_mA);
+void UpdateSineWaveOutput(void);
 
 
 #endif /* INC_LOAD_H_ */

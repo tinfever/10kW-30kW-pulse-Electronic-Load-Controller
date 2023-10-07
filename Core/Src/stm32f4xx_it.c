@@ -24,6 +24,8 @@
 /* USER CODE BEGIN Includes */
 #include "display.h"
 #include "adc.h"
+#include "state.h"
+#include "load.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -219,6 +221,11 @@ void SysTick_Handler(void)
 	if (SW4_debounce == 0x7FFFFFFF){
 		RegisterButtonPress(4);
 	}
+
+	if (GetSystemEnabled() && GetMode() == kSineWaveMode){
+		UpdateSineWaveOutput();
+	}
+
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
